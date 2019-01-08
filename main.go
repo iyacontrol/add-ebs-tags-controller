@@ -2,11 +2,14 @@ package main
 
 import (
 	"flag"
+	"time"
 
 	"github.com/golang/glog"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"k8s.io/add-ebs-tags-controller/pkg/signals"
 )
 
 var (
@@ -35,9 +38,8 @@ func main() {
 	controller := NewController(kubeClient, kubeInformerFactory)
 
 	go kubeInformerFactory.Start(stopCh)
-	go canaryDeployInformerFactory.Start(stopCh)
 
-	if err = controller.Run(2, stopCh); err != nil {
+	if err = controller.Run(1, stopCh); err != nil {
 		glog.Fatalf("Error running controller: %s", err.Error())
 	}
 
