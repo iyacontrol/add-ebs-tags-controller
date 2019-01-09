@@ -20,6 +20,9 @@ var (
 func main() {
 	flag.Parse()
 
+	//退出时调用，确保日志写入文件中
+	defer glog.Flush()
+
 	// set up signals so we handle the first shutdown signal gracefully
 	stopCh := signals.SetupSignalHandler()
 
@@ -35,7 +38,10 @@ func main() {
 
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 
-	controller := NewController(kubeClient, kubeInformerFactory)
+	controller, err := NewController(kubeClient, kubeInformerFactory)
+	if err != nil {
+		glog.Fatalf("Error new controller: %s", err.Error())
+	}
 
 	go kubeInformerFactory.Start(stopCh)
 

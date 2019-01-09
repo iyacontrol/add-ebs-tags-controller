@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"reflect"
+	"strings"
 	"time"
 
 	"github.com/golang/glog"
@@ -17,6 +17,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+
+	"k8s.io/add-ebs-tags-controller/pkg/aws"
 )
 
 const controllerAgentName = "add-ebs-tags-controller"
@@ -31,18 +33,24 @@ const VolumeClaimAnnotationBlockStorageAdditionalTags = "volume.beta.kubernetes.
 type Controller struct {
 	kubeclientset kubernetes.Interface
 
-	pvcsLister corelisters.PersistentVolumeClaimLister
-	pvcsSynced cache.InformerSynced
+	volumeLister       corelisters.PersistentVolumeLister
+	volumeListerSynced cache.InformerSynced
+
+	claimLister       corelisters.PersistentVolumeClaimLister
+	claimListerSynced cache.InformerSynced
 
 	queue    workqueue.RateLimitingInterface
 	recorder record.EventRecorder
+
+	ec2 aws.EC2
 }
 
 // NewController returns a new instance of a controller
 func NewController(kubeclientset kubernetes.Interface,
-	kubeInformerFactory kubeinformers.SharedInformerFactory) *Controller {
+	kubeInformerFactory kubeinformers.SharedInformerFactory) (*Controller, error) {
 
-	pvcInformer := kubeInformerFactory.Core().V1().PersistentVolumeClaims()
+	claimInformer := kubeInformerFactory.Core().V1().PersistentVolumeClaims()
+	volumeInformer := kubeInformerFactory.Core().V1().PersistentVolumes()
 
 	glog.V(4).Info("Creating event broadcaster")
 	eventBroadcaster := record.NewBroadcaster()
@@ -50,19 +58,29 @@ func NewController(kubeclientset kubernetes.Interface,
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: kubeclientset.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
+	ec2, err := aws.Compute()
+	if err != nil {
+		return nil, err
+	}
+
 	c := &Controller{
 		kubeclientset: kubeclientset,
 
-		pvcsLister: pvcInformer.Lister(),
-		pvcsSynced: pvcInformer.Informer().HasSynced,
+		volumeLister:       volumeInformer.Lister(),
+		volumeListerSynced: volumeInformer.Informer().HasSynced,
+
+		claimLister:       claimInformer.Lister(),
+		claimListerSynced: claimInformer.Informer().HasSynced,
 
 		queue:    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "pvcs"),
 		recorder: recorder,
+
+		ec2: ec2,
 	}
 
 	glog.Info("Setting up event handlers")
 	// Set up an event handler for when EventProvider resources change
-	pvcInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	volumeInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			glog.Info("AddFunc called with object: %v", obj)
 			key, err := cache.MetaNamespaceKeyFunc(obj)
@@ -71,32 +89,12 @@ func NewController(kubeclientset kubernetes.Interface,
 			}
 		},
 		UpdateFunc: func(old interface{}, new interface{}) {
-			glog.Info("UpdateFunc called with objects: %v, %v", old, new)
-			oldPVC := old.(*corev1.PersistentVolumeClaim)
-			newPVC := new.(*corev1.PersistentVolumeClaim)
-
-			if oldPVC.ResourceVersion == newPVC.ResourceVersion {
-				// Periodic resync will send update events for all known Objects.
-				// Two different versions of the same Objects will always have different RVs.
-				return
-			}
-
-			if reflect.DeepEqual(oldPVC.Annotations[VolumeClaimAnnotationBlockStorageAdditionalTags],
-				newPVC.Annotations[VolumeClaimAnnotationBlockStorageAdditionalTags]) {
-				return
-			}
-
-			key, err := cache.MetaNamespaceKeyFunc(new)
-			if err == nil {
-				c.queue.Add(key)
-			}
-
 		},
 		DeleteFunc: func(obj interface{}) {
 		},
 	})
 
-	return c
+	return c, nil
 
 }
 
@@ -113,7 +111,7 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 
 	// Wait for the caches to be synced before starting workers
 	glog.Info("Waiting for informer caches to sync")
-	if ok := cache.WaitForCacheSync(stopCh, c.pvcsSynced); !ok {
+	if ok := cache.WaitForCacheSync(stopCh, c.claimListerSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
 
@@ -195,12 +193,65 @@ func (c *Controller) processNextWorkItem() bool {
 // converge the two
 func (c *Controller) syncHandler(key string) error {
 	// Convert the namespace/name string into a distinct namespace and name
-	namespace, name, err := cache.SplitMetaNamespaceKey(key)
+	_, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return nil
 	}
-	glog.Infof("\nReceived: namespace: %v, name: %v\n", namespace, name)
+	glog.Infof("\nReceived:  name: %v\n", name)
+
+	volume, err := c.volumeLister.Get(name)
+	if err != nil {
+		return fmt.Errorf("error getting resource: %v", err)
+	}
+	glog.Infof("volume: %v", volume)
+
+	claimName := volume.Spec.ClaimRef.Name
+	claimNamespace := volume.Spec.ClaimRef.Namespace
+
+	claim, err := c.claimLister.PersistentVolumeClaims(claimNamespace).Get(claimName)
+	if err != nil {
+		return fmt.Errorf("error getting resource: %v", err)
+	}
+
+	if tags := getVolumeClaimAnnotationBlockStorageAdditionalTags(claim.Annotations); len(tags) > 0 {
+		// aws://ap-southeast-1b/vol-0c37a53ced37b40c3
+		awsVolumeID, err := aws.GetAWSVolumeID(volume.Spec.AWSElasticBlockStore.VolumeID)
+		if err != nil {
+			return fmt.Errorf("error get aws volume id: %v", err)
+		}
+
+		if err := c.ec2.CreateTags(awsVolumeID, tags); err != nil {
+			return fmt.Errorf("error create tags for volume %s : %v", awsVolumeID, err)
+		}
+
+	}
 
 	return nil
+}
+
+func getVolumeClaimAnnotationBlockStorageAdditionalTags(annotations map[string]string) map[string]string {
+	additionalTags := make(map[string]string)
+	if additionalTagsList, ok := annotations[VolumeClaimAnnotationBlockStorageAdditionalTags]; ok {
+		additionalTagsList = strings.TrimSpace(additionalTagsList)
+
+		// Break up list of "Key1=Val,Key2=Val2"
+		tagList := strings.Split(additionalTagsList, ",")
+
+		// Break up "Key=Val"
+		for _, tagSet := range tagList {
+			tag := strings.Split(strings.TrimSpace(tagSet), "=")
+
+			// Accept "Key=val" or "Key=" or just "Key"
+			if len(tag) >= 2 && len(tag[0]) != 0 {
+				// There is a key and a value, so save it
+				additionalTags[tag[0]] = tag[1]
+			} else if len(tag) == 1 && len(tag[0]) != 0 {
+				// Just "Key"
+				additionalTags[tag[0]] = ""
+			}
+		}
+	}
+
+	return additionalTags
 }

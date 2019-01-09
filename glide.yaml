@@ -1,0 +1,32 @@
+package: k8s.io/add-ebs-tags-controller
+import:
+- package: github.com/aws/aws-sdk-go
+  version: ^1.16.15
+  subpackages:
+  - aws
+  - aws/ec2metadata
+  - aws/session
+  - service/ec2
+- package: github.com/golang/glog
+- package: k8s.io/api
+  subpackages:
+  - core/v1
+- package: k8s.io/apimachinery
+  subpackages:
+  - pkg/util/runtime
+  - pkg/util/wait
+- package: k8s.io/client-go
+  version: ^10.0.0
+  subpackages:
+  - informers
+  - kubernetes
+  - kubernetes/scheme
+  - kubernetes/typed/core/v1
+  - listers/core/v1
+  - tools/cache
+  - tools/clientcmd
+  - tools/record
+  - util/workqueue
+- package: github.com/ticketmaster/aws-sdk-go-cache
+  subpackages:
+  - cache
