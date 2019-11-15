@@ -80,7 +80,7 @@ func NewController(kubeclientset kubernetes.Interface,
 
 	glog.Info("Setting up event handlers")
 	// Set up an event handler for when EventProvider resources change
-	volumeInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	claimInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			glog.Info("AddFunc called with object: %v", obj)
 			key, err := cache.MetaNamespaceKeyFunc(obj)
@@ -89,6 +89,21 @@ func NewController(kubeclientset kubernetes.Interface,
 			}
 		},
 		UpdateFunc: func(old interface{}, new interface{}) {
+			glog.Infof("UpdateFunc called with object: %v", new)
+			o := old.(*corev1.PersistentVolumeClaim)
+			n := new.(*corev1.PersistentVolumeClaim)
+
+			if o.ResourceVersion == n.ResourceVersion {
+				// Periodic resync will send update events for all known Objects.
+				// Two different versions of the same Objects will always have different RVs.
+				return
+			}
+
+			key, err := cache.MetaNamespaceKeyFunc(new)
+			if err == nil {
+				c.queue.Add(key)
+			}
+
 		},
 		DeleteFunc: func(obj interface{}) {
 		},
@@ -193,38 +208,51 @@ func (c *Controller) processNextWorkItem() bool {
 // converge the two
 func (c *Controller) syncHandler(key string) error {
 	// Convert the namespace/name string into a distinct namespace and name
-	_, name, err := cache.SplitMetaNamespaceKey(key)
+	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
+		glog.Errorf("invalid resource key: %s", key)
 		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return nil
 	}
 	glog.Infof("\nReceived:  name: %v\n", name)
 
-	volume, err := c.volumeLister.Get(name)
+	claim, err := c.claimLister.PersistentVolumeClaims(namespace).Get(name)
 	if err != nil {
-		return fmt.Errorf("error getting resource: %v", err)
+		glog.Errorf("error getting pvc: %v", err)
+		return fmt.Errorf("error getting pvc: %v", err)
 	}
-	glog.Infof("volume: %v", volume)
+	glog.Infof("claim: %v", claim)
 
-	claimName := volume.Spec.ClaimRef.Name
-	claimNamespace := volume.Spec.ClaimRef.Namespace
+	if claim.Spec.VolumeName == "" {
+		glog.Errorf("error  pv is not been boud to pvc : %s", name)
+		return fmt.Errorf("error  pv is not been boud to pvc : %s", name)
+	}
 
-	claim, err := c.claimLister.PersistentVolumeClaims(claimNamespace).Get(claimName)
+	volumeName := claim.Spec.VolumeName
+
+	volume, err := c.volumeLister.Get(volumeName)
 	if err != nil {
-		return fmt.Errorf("error getting resource: %v", err)
+		glog.Errorf("error getting pv: %v", err)
+		return fmt.Errorf("error getting pv: %v", err)
 	}
 
 	if tags := getVolumeClaimAnnotationBlockStorageAdditionalTags(claim.Annotations); len(tags) > 0 {
 		// aws://ap-southeast-1b/vol-0c37a53ced37b40c3
 		awsVolumeID, err := aws.GetAWSVolumeID(volume.Spec.AWSElasticBlockStore.VolumeID)
 		if err != nil {
+			glog.Errorf("error get aws volume id: %v", err)
 			return fmt.Errorf("error get aws volume id: %v", err)
 		}
 
 		if err := c.ec2.CreateTags(awsVolumeID, tags); err != nil {
+			glog.Errorf("error create tags for volume %s : %v", awsVolumeID, err)
 			return fmt.Errorf("error create tags for volume %s : %v", awsVolumeID, err)
 		}
 
+		glog.Infof("success tag vloume, name: %v\n", name)
+
+	} else {
+		glog.Infof("the pvc not include tags, skip:  name: %v\n", name)
 	}
 
 	return nil
