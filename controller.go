@@ -89,20 +89,23 @@ func NewController(kubeclientset kubernetes.Interface,
 			}
 		},
 		UpdateFunc: func(old interface{}, new interface{}) {
-			// glog.Infof("UpdateFunc called with object: %v", new)
-			// o := old.(*corev1.PersistentVolumeClaim)
-			// n := new.(*corev1.PersistentVolumeClaim)
+			glog.Infof("UpdateFunc called with object: %v", new)
+			o := old.(*corev1.PersistentVolumeClaim)
+			n := new.(*corev1.PersistentVolumeClaim)
 
-			// if o.ResourceVersion == n.ResourceVersion {
-			// 	// Periodic resync will send update events for all known Objects.
-			// 	// Two different versions of the same Objects will always have different RVs.
-			// 	return
-			// }
+			if o.ResourceVersion == n.ResourceVersion {
+				// Periodic resync will send update events for all known Objects.
+				// Two different versions of the same Objects will always have different RVs.
+				return
+			}
+			if o.Annotations[VolumeClaimAnnotationBlockStorageAdditionalTags] == n.Annotations[VolumeClaimAnnotationBlockStorageAdditionalTags] {
+				return
+			}
 
-			// key, err := cache.MetaNamespaceKeyFunc(new)
-			// if err == nil {
-			// 	c.queue.Add(key)
-			// }
+			key, err := cache.MetaNamespaceKeyFunc(new)
+			if err == nil {
+				c.queue.Add(key)
+			}
 
 		},
 		DeleteFunc: func(obj interface{}) {
