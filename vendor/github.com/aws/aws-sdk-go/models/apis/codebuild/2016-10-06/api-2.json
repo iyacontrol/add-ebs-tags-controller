@@ -126,7 +126,8 @@
       "output":{"shape":"ImportSourceCredentialsOutput"},
       "errors":[
         {"shape":"InvalidInputException"},
-        {"shape":"AccountLimitExceededException"}
+        {"shape":"AccountLimitExceededException"},
+        {"shape":"ResourceAlreadyExistsException"}
       ]
     },
     "InvalidateProjectCache":{
@@ -337,6 +338,7 @@
       "members":{
         "id":{"shape":"NonEmptyString"},
         "arn":{"shape":"NonEmptyString"},
+        "buildNumber":{"shape":"WrapperLong"},
         "startTime":{"shape":"Timestamp"},
         "endTime":{"shape":"Timestamp"},
         "currentPhase":{"shape":"String"},
@@ -360,7 +362,8 @@
         "initiator":{"shape":"String"},
         "vpcConfig":{"shape":"VpcConfig"},
         "networkInterface":{"shape":"NetworkInterface"},
-        "encryptionKey":{"shape":"NonEmptyString"}
+        "encryptionKey":{"shape":"NonEmptyString"},
+        "exportedEnvironmentVariables":{"shape":"ExportedEnvironmentVariables"}
       }
     },
     "BuildArtifacts":{
@@ -432,11 +435,20 @@
       "type":"list",
       "member":{"shape":"BuildNotDeleted"}
     },
+    "CacheMode":{
+      "type":"string",
+      "enum":[
+        "LOCAL_DOCKER_LAYER_CACHE",
+        "LOCAL_SOURCE_CACHE",
+        "LOCAL_CUSTOM_CACHE"
+      ]
+    },
     "CacheType":{
       "type":"string",
       "enum":[
         "NO_CACHE",
-        "S3"
+        "S3",
+        "LOCAL"
       ]
     },
     "CloudWatchLogsConfig":{
@@ -470,6 +482,8 @@
         "description":{"shape":"ProjectDescription"},
         "source":{"shape":"ProjectSource"},
         "secondarySources":{"shape":"ProjectSources"},
+        "sourceVersion":{"shape":"String"},
+        "secondarySourceVersions":{"shape":"ProjectSecondarySourceVersions"},
         "artifacts":{"shape":"ProjectArtifacts"},
         "secondaryArtifacts":{"shape":"ProjectArtifactsList"},
         "cache":{"shape":"ProjectCache"},
@@ -495,7 +509,8 @@
       "required":["projectName"],
       "members":{
         "projectName":{"shape":"ProjectName"},
-        "branchFilter":{"shape":"String"}
+        "branchFilter":{"shape":"String"},
+        "filterGroups":{"shape":"FilterGroups"}
       }
     },
     "CreateWebhookOutput":{
@@ -503,6 +518,10 @@
       "members":{
         "webhook":{"shape":"Webhook"}
       }
+    },
+    "CredentialProviderType":{
+      "type":"string",
+      "enum":["SECRETS_MANAGER"]
     },
     "DeleteProjectInput":{
       "type":"structure",
@@ -598,16 +617,50 @@
       "type":"string",
       "enum":[
         "PLAINTEXT",
-        "PARAMETER_STORE"
+        "PARAMETER_STORE",
+        "SECRETS_MANAGER"
       ]
     },
     "EnvironmentVariables":{
       "type":"list",
       "member":{"shape":"EnvironmentVariable"}
     },
+    "ExportedEnvironmentVariable":{
+      "type":"structure",
+      "members":{
+        "name":{"shape":"NonEmptyString"},
+        "value":{"shape":"String"}
+      }
+    },
+    "ExportedEnvironmentVariables":{
+      "type":"list",
+      "member":{"shape":"ExportedEnvironmentVariable"}
+    },
+    "FilterGroup":{
+      "type":"list",
+      "member":{"shape":"WebhookFilter"}
+    },
+    "FilterGroups":{
+      "type":"list",
+      "member":{"shape":"FilterGroup"}
+    },
     "GitCloneDepth":{
       "type":"integer",
       "min":0
+    },
+    "GitSubmodulesConfig":{
+      "type":"structure",
+      "required":["fetchSubmodules"],
+      "members":{
+        "fetchSubmodules":{"shape":"WrapperBoolean"}
+      }
+    },
+    "ImagePullCredentialsType":{
+      "type":"string",
+      "enum":[
+        "CODEBUILD",
+        "SERVICE_ROLE"
+      ]
     },
     "ImageVersions":{
       "type":"list",
@@ -624,7 +677,8 @@
         "username":{"shape":"NonEmptyString"},
         "token":{"shape":"SensitiveNonEmptyString"},
         "serverType":{"shape":"ServerType"},
-        "authType":{"shape":"AuthType"}
+        "authType":{"shape":"AuthType"},
+        "shouldOverwrite":{"shape":"WrapperBoolean"}
       }
     },
     "ImportSourceCredentialsOutput":{
@@ -655,7 +709,7 @@
       "type":"string",
       "max":127,
       "min":1,
-      "pattern":"^([\\\\p{L}\\\\p{Z}\\\\p{N}_.:/=@+\\\\-]*)$"
+      "pattern":"^([\\p{L}\\p{Z}\\p{N}_.:/=@+\\-]*)$"
     },
     "LanguageType":{
       "type":"string",
@@ -809,6 +863,8 @@
         "description":{"shape":"ProjectDescription"},
         "source":{"shape":"ProjectSource"},
         "secondarySources":{"shape":"ProjectSources"},
+        "sourceVersion":{"shape":"String"},
+        "secondarySourceVersions":{"shape":"ProjectSecondarySourceVersions"},
         "artifacts":{"shape":"ProjectArtifacts"},
         "secondaryArtifacts":{"shape":"ProjectArtifactsList"},
         "cache":{"shape":"ProjectCache"},
@@ -859,8 +915,13 @@
       "required":["type"],
       "members":{
         "type":{"shape":"CacheType"},
-        "location":{"shape":"String"}
+        "location":{"shape":"String"},
+        "modes":{"shape":"ProjectCacheModes"}
       }
+    },
+    "ProjectCacheModes":{
+      "type":"list",
+      "member":{"shape":"CacheMode"}
     },
     "ProjectDescription":{
       "type":"string",
@@ -880,7 +941,9 @@
         "computeType":{"shape":"ComputeType"},
         "environmentVariables":{"shape":"EnvironmentVariables"},
         "privilegedMode":{"shape":"WrapperBoolean"},
-        "certificate":{"shape":"String"}
+        "certificate":{"shape":"String"},
+        "registryCredential":{"shape":"RegistryCredential"},
+        "imagePullCredentialsType":{"shape":"ImagePullCredentialsType"}
       }
     },
     "ProjectName":{
@@ -916,6 +979,7 @@
         "type":{"shape":"SourceType"},
         "location":{"shape":"String"},
         "gitCloneDepth":{"shape":"GitCloneDepth"},
+        "gitSubmodulesConfig":{"shape":"GitSubmodulesConfig"},
         "buildspec":{"shape":"String"},
         "auth":{"shape":"SourceAuth"},
         "reportBuildStatus":{"shape":"WrapperBoolean"},
@@ -944,6 +1008,17 @@
       "type":"list",
       "member":{"shape":"Project"}
     },
+    "RegistryCredential":{
+      "type":"structure",
+      "required":[
+        "credential",
+        "credentialProvider"
+      ],
+      "members":{
+        "credential":{"shape":"NonEmptyString"},
+        "credentialProvider":{"shape":"CredentialProviderType"}
+      }
+    },
     "ResourceAlreadyExistsException":{
       "type":"structure",
       "members":{
@@ -961,7 +1036,8 @@
       "required":["status"],
       "members":{
         "status":{"shape":"LogsConfigStatusType"},
-        "location":{"shape":"String"}
+        "location":{"shape":"String"},
+        "encryptionDisabled":{"shape":"WrapperBoolean"}
       }
     },
     "SecurityGroupIds":{
@@ -1040,6 +1116,7 @@
         "sourceLocationOverride":{"shape":"String"},
         "sourceAuthOverride":{"shape":"SourceAuth"},
         "gitCloneDepthOverride":{"shape":"GitCloneDepth"},
+        "gitSubmodulesConfigOverride":{"shape":"GitSubmodulesConfig"},
         "buildspecOverride":{"shape":"String"},
         "insecureSslOverride":{"shape":"WrapperBoolean"},
         "reportBuildStatusOverride":{"shape":"WrapperBoolean"},
@@ -1053,7 +1130,9 @@
         "timeoutInMinutesOverride":{"shape":"TimeOut"},
         "queuedTimeoutInMinutesOverride":{"shape":"TimeOut"},
         "idempotencyToken":{"shape":"String"},
-        "logsConfigOverride":{"shape":"LogsConfig"}
+        "logsConfigOverride":{"shape":"LogsConfig"},
+        "registryCredentialOverride":{"shape":"RegistryCredential"},
+        "imagePullCredentialsTypeOverride":{"shape":"ImagePullCredentialsType"}
       }
     },
     "StartBuildOutput":{
@@ -1119,6 +1198,8 @@
         "description":{"shape":"ProjectDescription"},
         "source":{"shape":"ProjectSource"},
         "secondarySources":{"shape":"ProjectSources"},
+        "sourceVersion":{"shape":"String"},
+        "secondarySourceVersions":{"shape":"ProjectSecondarySourceVersions"},
         "artifacts":{"shape":"ProjectArtifacts"},
         "secondaryArtifacts":{"shape":"ProjectArtifactsList"},
         "cache":{"shape":"ProjectCache"},
@@ -1145,7 +1226,8 @@
       "members":{
         "projectName":{"shape":"ProjectName"},
         "branchFilter":{"shape":"String"},
-        "rotateSecret":{"shape":"Boolean"}
+        "rotateSecret":{"shape":"Boolean"},
+        "filterGroups":{"shape":"FilterGroups"}
       }
     },
     "UpdateWebhookOutput":{
@@ -1158,7 +1240,7 @@
       "type":"string",
       "max":255,
       "min":1,
-      "pattern":"^([\\\\p{L}\\\\p{Z}\\\\p{N}_.:/=@+\\\\-]*)$"
+      "pattern":"^([\\p{L}\\p{Z}\\p{N}_.:/=@+\\-]*)$"
     },
     "VpcConfig":{
       "type":"structure",
@@ -1175,8 +1257,31 @@
         "payloadUrl":{"shape":"NonEmptyString"},
         "secret":{"shape":"NonEmptyString"},
         "branchFilter":{"shape":"String"},
+        "filterGroups":{"shape":"FilterGroups"},
         "lastModifiedSecret":{"shape":"Timestamp"}
       }
+    },
+    "WebhookFilter":{
+      "type":"structure",
+      "required":[
+        "type",
+        "pattern"
+      ],
+      "members":{
+        "type":{"shape":"WebhookFilterType"},
+        "pattern":{"shape":"String"},
+        "excludeMatchedPattern":{"shape":"WrapperBoolean"}
+      }
+    },
+    "WebhookFilterType":{
+      "type":"string",
+      "enum":[
+        "EVENT",
+        "BASE_REF",
+        "HEAD_REF",
+        "ACTOR_ACCOUNT_ID",
+        "FILE_PATH"
+      ]
     },
     "WrapperBoolean":{"type":"boolean"},
     "WrapperInt":{"type":"integer"},

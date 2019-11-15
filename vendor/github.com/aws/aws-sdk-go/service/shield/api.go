@@ -59,8 +59,8 @@ func (c *Shield) AssociateDRTLogBucketRequest(input *AssociateDRTLogBucketInput)
 // AssociateDRTLogBucket API operation for AWS Shield.
 //
 // Authorizes the DDoS Response team (DRT) to access the specified Amazon S3
-// bucket containing your flow logs. You can associate up to 10 Amazon S3 buckets
-// with your subscription.
+// bucket containing your AWS WAF logs. You can associate up to 10 Amazon S3
+// buckets with your subscription.
 //
 // To use the services of the DRT and make an AssociateDRTLogBucket request,
 // you must be subscribed to the Business Support plan (https://aws.amazon.com/premiumsupport/business-support/)
@@ -187,8 +187,8 @@ func (c *Shield) AssociateDRTRoleRequest(input *AssociateDRTRoleInput) (req *req
 // Prior to making the AssociateDRTRole request, you must attach the AWSShieldDRTAccessPolicy
 // (https://console.aws.amazon.com/iam/home?#/policies/arn:aws:iam::aws:policy/service-role/AWSShieldDRTAccessPolicy)
 // managed policy to the role you will specify in the request. For more information
-// see Attaching and Detaching IAM Policies ( https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-attach-detach.html).
-// The role must also trust the service principal  drt.shield.amazonaws.com.
+// see Attaching and Detaching IAM Policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-attach-detach.html).
+// The role must also trust the service principal drt.shield.amazonaws.com.
 // For more information, see IAM JSON Policy Elements: Principal (https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html).
 //
 // The DRT will have access only to your AWS WAF and Shield resources. By submitting
@@ -304,7 +304,8 @@ func (c *Shield) CreateProtectionRequest(input *CreateProtectionInput) (req *req
 //
 // Enables AWS Shield Advanced for a specific AWS resource. The resource can
 // be an Amazon CloudFront distribution, Elastic Load Balancing load balancer,
-// Elastic IP Address, or an Amazon Route 53 hosted zone.
+// AWS Global Accelerator accelerator, Elastic IP Address, or an Amazon Route
+// 53 hosted zone.
 //
 // You can add protection to only a single resource with each CreateProtection
 // request. If you want to add protection to multiple resources at once, use
@@ -422,6 +423,10 @@ func (c *Shield) CreateSubscriptionRequest(input *CreateSubscriptionInput) (req 
 // grant the DDoS response team (DRT) needed permissions to assist you during
 // a suspected DDoS attack. For more information see Authorize the DDoS Response
 // Team to Create Rules and Web ACLs on Your Behalf (https://docs.aws.amazon.com/waf/latest/developerguide/authorize-DRT.html).
+//
+// To use the services of the DRT, you must be subscribed to the Business Support
+// plan (https://aws.amazon.com/premiumsupport/business-support/) or the Enterprise
+// Support plan (https://aws.amazon.com/premiumsupport/enterprise-support/).
 //
 // When you initally create a subscription, your subscription is set to be automatically
 // renewed at the end of the existing subscription period. You can change this
@@ -712,6 +717,8 @@ func (c *Shield) DescribeAttackRequest(input *DescribeAttackInput) (req *request
 //   You can retry the request.
 //
 //   * ErrCodeAccessDeniedException "AccessDeniedException"
+//   Exception that indicates the specified AttackId does not exist, or the requester
+//   does not have the appropriate permissions to access the AttackId.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/shield-2016-06-02/DescribeAttack
 func (c *Shield) DescribeAttack(input *DescribeAttackInput) (*DescribeAttackOutput, error) {
@@ -962,6 +969,9 @@ func (c *Shield) DescribeProtectionRequest(input *DescribeProtectionInput) (req 
 //   Exception that indicates that a problem occurred with the service infrastructure.
 //   You can retry the request.
 //
+//   * ErrCodeInvalidParameterException "InvalidParameterException"
+//   Exception that indicates that the parameters passed to the API are invalid.
+//
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   Exception indicating the specified resource does not exist.
 //
@@ -1116,7 +1126,7 @@ func (c *Shield) DisassociateDRTLogBucketRequest(input *DisassociateDRTLogBucket
 // DisassociateDRTLogBucket API operation for AWS Shield.
 //
 // Removes the DDoS Response team's (DRT) access to the specified Amazon S3
-// bucket containing your flow logs.
+// bucket containing your AWS WAF logs.
 //
 // To make a DisassociateDRTLogBucket request, you must be subscribed to the
 // Business Support plan (https://aws.amazon.com/premiumsupport/business-support/)
@@ -1726,7 +1736,7 @@ func (c *Shield) UpdateSubscriptionWithContext(ctx aws.Context, input *UpdateSub
 type AssociateDRTLogBucketInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon S3 bucket that contains your flow logs.
+	// The Amazon S3 bucket that contains your AWS WAF logs.
 	//
 	// LogBucket is a required field
 	LogBucket *string `min:"3" type:"string" required:"true"`
@@ -1787,7 +1797,7 @@ type AssociateDRTRoleInput struct {
 	// Prior to making the AssociateDRTRole request, you must attach the AWSShieldDRTAccessPolicy
 	// (https://console.aws.amazon.com/iam/home?#/policies/arn:aws:iam::aws:policy/service-role/AWSShieldDRTAccessPolicy)
 	// managed policy to this role. For more information see Attaching and Detaching
-	// IAM Policies ( https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-attach-detach.html).
+	// IAM Policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-attach-detach.html).
 	//
 	// RoleArn is a required field
 	RoleArn *string `min:"1" type:"string" required:"true"`
@@ -1933,11 +1943,14 @@ func (s *AttackDetail) SetSubResources(v []*SubResourceSummary) *AttackDetail {
 type AttackProperty struct {
 	_ struct{} `type:"structure"`
 
-	// The type of DDoS event that was observed. NETWORK indicates layer 3 and layer
-	// 4 events and APPLICATION indicates layer 7 events.
+	// The type of distributed denial of service (DDoS) event that was observed.
+	// NETWORK indicates layer 3 and layer 4 events and APPLICATION indicates layer
+	// 7 events.
 	AttackLayer *string `type:"string" enum:"AttackLayer"`
 
-	// Defines the DDoS attack property information that is provided.
+	// Defines the DDoS attack property information that is provided. The WORDPRESS_PINGBACK_REFLECTOR
+	// and WORDPRESS_PINGBACK_SOURCE values are valid only for WordPress reflective
+	// pingback DDoS attacks.
 	AttackPropertyIdentifier *string `type:"string" enum:"AttackPropertyIdentifier"`
 
 	// The array of Contributor objects that includes the top five contributors
@@ -2090,6 +2103,12 @@ type AttackVectorDescription struct {
 	//
 	//    * REQUEST_FLOOD
 	//
+	//    * HTTP_REFLECTION
+	//
+	//    * UDS_REFLECTION
+	//
+	//    * MEMCACHED_REFLECTION
+	//
 	// VectorType is a required field
 	VectorType *string `type:"string" required:"true"`
 }
@@ -2162,7 +2181,9 @@ type CreateProtectionInput struct {
 	//
 	//    * For an Elastic Load Balancer (Classic Load Balancer): arn:aws:elasticloadbalancing:region:account-id:loadbalancer/load-balancer-name
 	//
-	//    * For AWS CloudFront distribution: arn:aws:cloudfront::account-id:distribution/distribution-id
+	//    * For an AWS CloudFront distribution: arn:aws:cloudfront::account-id:distribution/distribution-id
+	//
+	//    * For an AWS Global Accelerator accelerator: arn:aws:globalaccelerator::account-id:accelerator/accelerator-id
 	//
 	//    * For Amazon Route 53: arn:aws:route53:::hostedzone/hosted-zone-id
 	//
@@ -2504,10 +2525,15 @@ func (s *DescribeEmergencyContactSettingsOutput) SetEmergencyContactList(v []*Em
 type DescribeProtectionInput struct {
 	_ struct{} `type:"structure"`
 
-	// The unique identifier (ID) for the Protection object that is described.
-	//
-	// ProtectionId is a required field
-	ProtectionId *string `min:"1" type:"string" required:"true"`
+	// The unique identifier (ID) for the Protection object that is described. When
+	// submitting the DescribeProtection request you must provide either the ResourceArn
+	// or the ProtectionID, but not both.
+	ProtectionId *string `min:"1" type:"string"`
+
+	// The ARN (Amazon Resource Name) of the AWS resource for the Protection object
+	// that is described. When submitting the DescribeProtection request you must
+	// provide either the ResourceArn or the ProtectionID, but not both.
+	ResourceArn *string `min:"1" type:"string"`
 }
 
 // String returns the string representation
@@ -2523,11 +2549,11 @@ func (s DescribeProtectionInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *DescribeProtectionInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "DescribeProtectionInput"}
-	if s.ProtectionId == nil {
-		invalidParams.Add(request.NewErrParamRequired("ProtectionId"))
-	}
 	if s.ProtectionId != nil && len(*s.ProtectionId) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("ProtectionId", 1))
+	}
+	if s.ResourceArn != nil && len(*s.ResourceArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceArn", 1))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -2539,6 +2565,12 @@ func (s *DescribeProtectionInput) Validate() error {
 // SetProtectionId sets the ProtectionId field's value.
 func (s *DescribeProtectionInput) SetProtectionId(v string) *DescribeProtectionInput {
 	s.ProtectionId = &v
+	return s
+}
+
+// SetResourceArn sets the ResourceArn field's value.
+func (s *DescribeProtectionInput) SetResourceArn(v string) *DescribeProtectionInput {
+	s.ResourceArn = &v
 	return s
 }
 
@@ -2605,7 +2637,7 @@ func (s *DescribeSubscriptionOutput) SetSubscription(v *Subscription) *DescribeS
 type DisassociateDRTLogBucketInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon S3 bucket that contains your flow logs.
+	// The Amazon S3 bucket that contains your AWS WAF logs.
 	//
 	// LogBucket is a required field
 	LogBucket *string `min:"3" type:"string" required:"true"`
@@ -3467,6 +3499,12 @@ const (
 
 	// AttackPropertyIdentifierSourceUserAgent is a AttackPropertyIdentifier enum value
 	AttackPropertyIdentifierSourceUserAgent = "SOURCE_USER_AGENT"
+
+	// AttackPropertyIdentifierWordpressPingbackReflector is a AttackPropertyIdentifier enum value
+	AttackPropertyIdentifierWordpressPingbackReflector = "WORDPRESS_PINGBACK_REFLECTOR"
+
+	// AttackPropertyIdentifierWordpressPingbackSource is a AttackPropertyIdentifier enum value
+	AttackPropertyIdentifierWordpressPingbackSource = "WORDPRESS_PINGBACK_SOURCE"
 )
 
 const (

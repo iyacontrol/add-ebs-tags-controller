@@ -27,6 +27,8 @@ type API struct {
 	Examples      Examples
 	SmokeTests    SmokeTestSuite
 
+	IgnoreUnsupportedAPIs bool
+
 	// Set to true to avoid removing unused shapes
 	NoRemoveUnusedShapes bool
 
@@ -220,8 +222,8 @@ func (a *API) ShapeNames() []string {
 func (a *API) ShapeList() []*Shape {
 	list := make([]*Shape, 0, len(a.Shapes))
 	for _, n := range a.ShapeNames() {
-		// Ignore error shapes in list
-		if s := a.Shapes[n]; !s.IsError {
+		// Ignore non-eventstream exception shapes in list.
+		if s := a.Shapes[n]; !(s.Exception && len(s.EventFor) == 0) {
 			list = append(list, s)
 		}
 	}
@@ -233,7 +235,7 @@ func (a *API) ShapeListErrors() []*Shape {
 	list := []*Shape{}
 	for _, n := range a.ShapeNames() {
 		// Ignore error shapes in list
-		if s := a.Shapes[n]; s.IsError {
+		if s := a.Shapes[n]; s.Exception {
 			list = append(list, s)
 		}
 	}
@@ -414,7 +416,7 @@ var tplServiceDoc = template.Must(template.New("service docs").Funcs(template.Fu
 //
 // See the SDK's documentation for more information on how to use the SDK.
 // https://docs.aws.amazon.com/sdk-for-go/api/
-// 
+//
 // See aws.Config documentation for more information on configuring SDK clients.
 // https://docs.aws.amazon.com/sdk-for-go/api/aws/#Config
 //
@@ -537,11 +539,11 @@ func New(p client.ConfigProvider, cfgs ...*aws.Config) *{{ .StructName }} {
 			c.SigningName = "{{ .Metadata.SigningName }}"
 		}
 	{{- end }}
-	return newClient(*c.Config, c.Handlers, c.Endpoint, c.SigningRegion, c.SigningName)
+	return newClient(*c.Config, c.Handlers, c.PartitionID, c.Endpoint, c.SigningRegion, c.SigningName)
 }
 
 // newClient creates, initializes and returns a new service client instance.
-func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegion, signingName string) *{{ .StructName }} {
+func newClient(cfg aws.Config, handlers request.Handlers, partitionID, endpoint, signingRegion, signingName string) *{{ .StructName }} {
     svc := &{{ .StructName }}{
     	Client: client.New(
     		cfg,
@@ -550,12 +552,13 @@ func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegio
 			ServiceID : {{ ServiceIDVar . }},
 			SigningName: signingName,
 			SigningRegion: signingRegion,
+			PartitionID: partitionID,
 			Endpoint:     endpoint,
 			APIVersion:   "{{ .Metadata.APIVersion }}",
-			{{ if .Metadata.JSONVersion -}}
+			{{ if and (.Metadata.JSONVersion) (eq .Metadata.Protocol "json") -}}
 				JSONVersion:  "{{ .Metadata.JSONVersion }}",
 			{{- end }}
-			{{ if .Metadata.TargetPrefix -}}
+			{{ if and (.Metadata.TargetPrefix) (eq .Metadata.Protocol "json") -}}
 				TargetPrefix: "{{ .Metadata.TargetPrefix }}",
 			{{- end }}
     		},
@@ -730,7 +733,7 @@ var tplInterface = template.Must(template.New("interface").Parse(`
 //
 // It is important to note that this interface will have breaking changes
 // when the service model is updated and adds new API operations, paginators,
-// and waiters. Its suggested to use the pattern above for testing, or using 
+// and waiters. Its suggested to use the pattern above for testing, or using
 // tooling to generate mocks to satisfy the interfaces.
 type {{ .StructName }}API interface {
     {{ range $_, $o := .OperationList }}
@@ -917,6 +920,23 @@ func (a *API) removeShapeRef(ref *ShapeRef) {
 	ref.Shape.removeRef(ref)
 	if len(ref.Shape.refs) == 0 {
 		a.removeShape(ref.Shape)
+	}
+}
+
+// writeInputOutputLocationName writes the ShapeName to the
+// shapes LocationName in the event that there is no LocationName
+// specified.
+func (a *API) writeInputOutputLocationName() {
+	for _, o := range a.Operations {
+		setInput := len(o.InputRef.LocationName) == 0 && a.Metadata.Protocol == "rest-xml"
+		setOutput := len(o.OutputRef.LocationName) == 0 && (a.Metadata.Protocol == "rest-xml" || a.Metadata.Protocol == "ec2")
+
+		if setInput {
+			o.InputRef.LocationName = o.InputRef.Shape.OrigShapeName
+		}
+		if setOutput {
+			o.OutputRef.LocationName = o.OutputRef.Shape.OrigShapeName
+		}
 	}
 }
 

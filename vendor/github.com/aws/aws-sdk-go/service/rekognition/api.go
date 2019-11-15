@@ -198,7 +198,7 @@ func (c *Rekognition) CreateCollectionRequest(input *CreateCollectionInput) (req
 // CreateCollection API operation for Amazon Rekognition.
 //
 // Creates a collection in an AWS Region. You can add faces to the collection
-// using the operation.
+// using the IndexFaces operation.
 //
 // For example, you might create collections, one for each of your application
 // users. A user can then index faces using the IndexFaces operation and persist
@@ -317,10 +317,10 @@ func (c *Rekognition) CreateStreamProcessorRequest(input *CreateStreamProcessorI
 // For example, the collection containing faces that you want to recognize.
 // Use Name to assign an identifier for the stream processor. You use Name to
 // manage the stream processor. For example, you can start processing the source
-// video by calling with the Name field.
+// video by calling StartStreamProcessor with the Name field.
 //
-// After you have finished analyzing a streaming video, use to stop processing.
-// You can delete the stream processor by calling .
+// After you have finished analyzing a streaming video, use StopStreamProcessor
+// to stop processing. You can delete the stream processor by calling DeleteStreamProcessor.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -618,9 +618,9 @@ func (c *Rekognition) DeleteStreamProcessorRequest(input *DeleteStreamProcessorI
 // DeleteStreamProcessor API operation for Amazon Rekognition.
 //
 // Deletes the stream processor identified by Name. You assign the value for
-// Name when you create the stream processor with . You might not be able to
-// use the same name for a stream processor for a few seconds after calling
-// DeleteStreamProcessor.
+// Name when you create the stream processor with CreateStreamProcessor. You
+// might not be able to use the same name for a stream processor for a few seconds
+// after calling DeleteStreamProcessor.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -815,9 +815,10 @@ func (c *Rekognition) DescribeStreamProcessorRequest(input *DescribeStreamProces
 
 // DescribeStreamProcessor API operation for Amazon Rekognition.
 //
-// Provides information about a stream processor created by . You can get information
-// about the input and output streams, the input parameters for the face recognition
-// being performed, and the current status of the stream processor.
+// Provides information about a stream processor created by CreateStreamProcessor.
+// You can get information about the input and output streams, the input parameters
+// for the face recognition being performed, and the current status of the stream
+// processor.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1079,16 +1080,16 @@ func (c *Rekognition) DetectLabelsRequest(input *DetectLabelsInput) (req *reques
 // In response, the API returns an array of labels. In addition, the response
 // also includes the orientation correction. Optionally, you can specify MinConfidence
 // to control the confidence threshold for the labels returned. The default
-// is 50%. You can also add the MaxLabels parameter to limit the number of labels
+// is 55%. You can also add the MaxLabels parameter to limit the number of labels
 // returned.
 //
 // If the object detected is a person, the operation doesn't provide the same
 // facial details that the DetectFaces operation provides.
 //
 // DetectLabels returns bounding boxes for instances of common object labels
-// in an array of objects. An Instance object contains a object, for the location
-// of the label on the image. It also includes the confidence by which the bounding
-// box was detected.
+// in an array of Instance objects. An Instance object contains a BoundingBox
+// object, for the location of the label on the image. It also includes the
+// confidence by which the bounding box was detected.
 //
 // DetectLabels also returns a hierarchical taxonomy of detected labels. For
 // example, a detected car might be assigned the label car. The label car has
@@ -1202,10 +1203,10 @@ func (c *Rekognition) DetectModerationLabelsRequest(input *DetectModerationLabel
 
 // DetectModerationLabels API operation for Amazon Rekognition.
 //
-// Detects explicit or suggestive adult content in a specified JPEG or PNG format
-// image. Use DetectModerationLabels to moderate images depending on your requirements.
-// For example, you might want to filter images that contain nudity, but not
-// images containing suggestive content.
+// Detects unsafe content in a specified JPEG or PNG format image. Use DetectModerationLabels
+// to moderate images depending on your requirements. For example, you might
+// want to filter images that contain nudity, but not images containing suggestive
+// content.
 //
 // To filter images, use the labels returned by DetectModerationLabels to determine
 // which types of content are appropriate.
@@ -1325,9 +1326,9 @@ func (c *Rekognition) DetectTextRequest(input *DetectTextInput) (req *request.Re
 // For the AWS CLI, passing image bytes is not supported. The image must be
 // either a .png or .jpeg formatted file.
 //
-// The DetectText operation returns text in an array of elements, TextDetections.
-// Each TextDetection element provides information about a single word or line
-// of text that was detected in the image.
+// The DetectText operation returns text in an array of TextDetection elements,
+// TextDetections. Each TextDetection element provides information about a single
+// word or line of text that was detected in the image.
 //
 // A word is one or more ISO basic latin script characters that are not separated
 // by spaces. DetectText can detect up to 50 words in an image.
@@ -1559,24 +1560,24 @@ func (c *Rekognition) GetCelebrityRecognitionRequest(input *GetCelebrityRecognit
 // GetCelebrityRecognition API operation for Amazon Rekognition.
 //
 // Gets the celebrity recognition results for a Amazon Rekognition Video analysis
-// started by .
+// started by StartCelebrityRecognition.
 //
 // Celebrity recognition in a video is an asynchronous operation. Analysis is
-// started by a call to which returns a job identifier (JobId). When the celebrity
-// recognition operation finishes, Amazon Rekognition Video publishes a completion
-// status to the Amazon Simple Notification Service topic registered in the
-// initial call to StartCelebrityRecognition. To get the results of the celebrity
-// recognition analysis, first check that the status value published to the
-// Amazon SNS topic is SUCCEEDED. If so, call GetCelebrityDetection and pass
-// the job identifier (JobId) from the initial call to StartCelebrityDetection.
+// started by a call to StartCelebrityRecognition which returns a job identifier
+// (JobId). When the celebrity recognition operation finishes, Amazon Rekognition
+// Video publishes a completion status to the Amazon Simple Notification Service
+// topic registered in the initial call to StartCelebrityRecognition. To get
+// the results of the celebrity recognition analysis, first check that the status
+// value published to the Amazon SNS topic is SUCCEEDED. If so, call GetCelebrityDetection
+// and pass the job identifier (JobId) from the initial call to StartCelebrityDetection.
 //
 // For more information, see Working With Stored Videos in the Amazon Rekognition
 // Developer Guide.
 //
 // GetCelebrityRecognition returns detected celebrities and the time(s) they
-// are detected in an array (Celebrities) of objects. Each CelebrityRecognition
-// contains information about the celebrity in a object and the time, Timestamp,
-// the celebrity was detected.
+// are detected in an array (Celebrities) of CelebrityRecognition objects. Each
+// CelebrityRecognition contains information about the celebrity in a CelebrityDetail
+// object and the time, Timestamp, the celebrity was detected.
 //
 // GetCelebrityRecognition only returns the default facial attributes (BoundingBox,
 // Confidence, Landmarks, Pose, and Quality). The other facial attributes listed
@@ -1589,7 +1590,7 @@ func (c *Rekognition) GetCelebrityRecognitionRequest(input *GetCelebrityRecognit
 //
 // The CelebrityDetail object includes the celebrity identifer and additional
 // information urls. If you don't store the additional information urls, you
-// can get them later by calling with the celebrity identifer.
+// can get them later by calling GetCelebrityInfo with the celebrity identifer.
 //
 // No information is returned for faces not recognized as celebrities.
 //
@@ -1664,7 +1665,7 @@ func (c *Rekognition) GetCelebrityRecognitionWithContext(ctx aws.Context, input 
 //    // Example iterating over at most 3 pages of a GetCelebrityRecognition operation.
 //    pageNum := 0
 //    err := client.GetCelebrityRecognitionPages(params,
-//        func(page *GetCelebrityRecognitionOutput, lastPage bool) bool {
+//        func(page *rekognition.GetCelebrityRecognitionOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1696,10 +1697,12 @@ func (c *Rekognition) GetCelebrityRecognitionPagesWithContext(ctx aws.Context, i
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*GetCelebrityRecognitionOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*GetCelebrityRecognitionOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1751,23 +1754,24 @@ func (c *Rekognition) GetContentModerationRequest(input *GetContentModerationInp
 
 // GetContentModeration API operation for Amazon Rekognition.
 //
-// Gets the content moderation analysis results for a Amazon Rekognition Video
-// analysis started by .
+// Gets the unsafe content analysis results for a Amazon Rekognition Video analysis
+// started by StartContentModeration.
 //
-// Content moderation analysis of a video is an asynchronous operation. You
-// start analysis by calling . which returns a job identifier (JobId). When
-// analysis finishes, Amazon Rekognition Video publishes a completion status
-// to the Amazon Simple Notification Service topic registered in the initial
-// call to StartContentModeration. To get the results of the content moderation
-// analysis, first check that the status value published to the Amazon SNS topic
-// is SUCCEEDED. If so, call GetCelebrityDetection and pass the job identifier
-// (JobId) from the initial call to StartCelebrityDetection.
+// Unsafe content analysis of a video is an asynchronous operation. You start
+// analysis by calling StartContentModeration which returns a job identifier
+// (JobId). When analysis finishes, Amazon Rekognition Video publishes a completion
+// status to the Amazon Simple Notification Service topic registered in the
+// initial call to StartContentModeration. To get the results of the unsafe
+// content analysis, first check that the status value published to the Amazon
+// SNS topic is SUCCEEDED. If so, call GetContentModeration and pass the job
+// identifier (JobId) from the initial call to StartContentModeration.
 //
 // For more information, see Working with Stored Videos in the Amazon Rekognition
 // Devlopers Guide.
 //
-// GetContentModeration returns detected content moderation labels, and the
-// time they are detected, in an array, ModerationLabels, of objects.
+// GetContentModeration returns detected unsafe content labels, and the time
+// they are detected, in an array, ModerationLabels, of ContentModerationDetection
+// objects.
 //
 // By default, the moderated labels are returned sorted by time, in milliseconds
 // from the start of the video. You can also sort them by moderated label by
@@ -1848,7 +1852,7 @@ func (c *Rekognition) GetContentModerationWithContext(ctx aws.Context, input *Ge
 //    // Example iterating over at most 3 pages of a GetContentModeration operation.
 //    pageNum := 0
 //    err := client.GetContentModerationPages(params,
-//        func(page *GetContentModerationOutput, lastPage bool) bool {
+//        func(page *rekognition.GetContentModerationOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1880,10 +1884,12 @@ func (c *Rekognition) GetContentModerationPagesWithContext(ctx aws.Context, inpu
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*GetContentModerationOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*GetContentModerationOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1936,16 +1942,16 @@ func (c *Rekognition) GetFaceDetectionRequest(input *GetFaceDetectionInput) (req
 // GetFaceDetection API operation for Amazon Rekognition.
 //
 // Gets face detection results for a Amazon Rekognition Video analysis started
-// by .
+// by StartFaceDetection.
 //
 // Face detection with Amazon Rekognition Video is an asynchronous operation.
-// You start face detection by calling which returns a job identifier (JobId).
-// When the face detection operation finishes, Amazon Rekognition Video publishes
-// a completion status to the Amazon Simple Notification Service topic registered
-// in the initial call to StartFaceDetection. To get the results of the face
-// detection operation, first check that the status value published to the Amazon
-// SNS topic is SUCCEEDED. If so, call and pass the job identifier (JobId) from
-// the initial call to StartFaceDetection.
+// You start face detection by calling StartFaceDetection which returns a job
+// identifier (JobId). When the face detection operation finishes, Amazon Rekognition
+// Video publishes a completion status to the Amazon Simple Notification Service
+// topic registered in the initial call to StartFaceDetection. To get the results
+// of the face detection operation, first check that the status value published
+// to the Amazon SNS topic is SUCCEEDED. If so, call GetFaceDetection and pass
+// the job identifier (JobId) from the initial call to StartFaceDetection.
 //
 // GetFaceDetection returns an array of detected faces (Faces) sorted by the
 // time the faces were detected.
@@ -2021,7 +2027,7 @@ func (c *Rekognition) GetFaceDetectionWithContext(ctx aws.Context, input *GetFac
 //    // Example iterating over at most 3 pages of a GetFaceDetection operation.
 //    pageNum := 0
 //    err := client.GetFaceDetectionPages(params,
-//        func(page *GetFaceDetectionOutput, lastPage bool) bool {
+//        func(page *rekognition.GetFaceDetectionOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -2053,10 +2059,12 @@ func (c *Rekognition) GetFaceDetectionPagesWithContext(ctx aws.Context, input *G
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*GetFaceDetectionOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*GetFaceDetectionOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -2109,25 +2117,27 @@ func (c *Rekognition) GetFaceSearchRequest(input *GetFaceSearchInput) (req *requ
 // GetFaceSearch API operation for Amazon Rekognition.
 //
 // Gets the face search results for Amazon Rekognition Video face search started
-// by . The search returns faces in a collection that match the faces of persons
-// detected in a video. It also includes the time(s) that faces are matched
-// in the video.
+// by StartFaceSearch. The search returns faces in a collection that match the
+// faces of persons detected in a video. It also includes the time(s) that faces
+// are matched in the video.
 //
 // Face search in a video is an asynchronous operation. You start face search
-// by calling to which returns a job identifier (JobId). When the search operation
-// finishes, Amazon Rekognition Video publishes a completion status to the Amazon
-// Simple Notification Service topic registered in the initial call to StartFaceSearch.
-// To get the search results, first check that the status value published to
-// the Amazon SNS topic is SUCCEEDED. If so, call GetFaceSearch and pass the
-// job identifier (JobId) from the initial call to StartFaceSearch.
+// by calling to StartFaceSearch which returns a job identifier (JobId). When
+// the search operation finishes, Amazon Rekognition Video publishes a completion
+// status to the Amazon Simple Notification Service topic registered in the
+// initial call to StartFaceSearch. To get the search results, first check that
+// the status value published to the Amazon SNS topic is SUCCEEDED. If so, call
+// GetFaceSearch and pass the job identifier (JobId) from the initial call to
+// StartFaceSearch.
 //
 // For more information, see Searching Faces in a Collection in the Amazon Rekognition
 // Developer Guide.
 //
-// The search results are retured in an array, Persons, of objects. EachPersonMatch
-// element contains details about the matching faces in the input collection,
-// person information (facial attributes, bounding boxes, and person identifer)
-// for the matched person, and the time the person was matched in the video.
+// The search results are retured in an array, Persons, of PersonMatch objects.
+// EachPersonMatch element contains details about the matching faces in the
+// input collection, person information (facial attributes, bounding boxes,
+// and person identifer) for the matched person, and the time the person was
+// matched in the video.
 //
 // GetFaceSearch only returns the default facial attributes (BoundingBox, Confidence,
 // Landmarks, Pose, and Quality). The other facial attributes listed in the
@@ -2202,7 +2212,7 @@ func (c *Rekognition) GetFaceSearchWithContext(ctx aws.Context, input *GetFaceSe
 //    // Example iterating over at most 3 pages of a GetFaceSearch operation.
 //    pageNum := 0
 //    err := client.GetFaceSearchPages(params,
-//        func(page *GetFaceSearchOutput, lastPage bool) bool {
+//        func(page *rekognition.GetFaceSearchOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -2234,10 +2244,12 @@ func (c *Rekognition) GetFaceSearchPagesWithContext(ctx aws.Context, input *GetF
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*GetFaceSearchOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*GetFaceSearchOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -2290,15 +2302,16 @@ func (c *Rekognition) GetLabelDetectionRequest(input *GetLabelDetectionInput) (r
 // GetLabelDetection API operation for Amazon Rekognition.
 //
 // Gets the label detection results of a Amazon Rekognition Video analysis started
-// by .
+// by StartLabelDetection.
 //
-// The label detection operation is started by a call to which returns a job
-// identifier (JobId). When the label detection operation finishes, Amazon Rekognition
-// publishes a completion status to the Amazon Simple Notification Service topic
-// registered in the initial call to StartlabelDetection. To get the results
-// of the label detection operation, first check that the status value published
-// to the Amazon SNS topic is SUCCEEDED. If so, call and pass the job identifier
-// (JobId) from the initial call to StartLabelDetection.
+// The label detection operation is started by a call to StartLabelDetection
+// which returns a job identifier (JobId). When the label detection operation
+// finishes, Amazon Rekognition publishes a completion status to the Amazon
+// Simple Notification Service topic registered in the initial call to StartlabelDetection.
+// To get the results of the label detection operation, first check that the
+// status value published to the Amazon SNS topic is SUCCEEDED. If so, call
+// GetLabelDetection and pass the job identifier (JobId) from the initial call
+// to StartLabelDetection.
 //
 // GetLabelDetection returns an array of detected labels (Labels) sorted by
 // the time the labels were detected. You can also sort by the label name by
@@ -2308,17 +2321,16 @@ func (c *Rekognition) GetLabelDetectionRequest(input *GetLabelDetectionInput) (r
 // the accuracy of the detected label, and the time the label was detected in
 // the video.
 //
+// The returned labels also include bounding box information for common objects,
+// a hierarchical taxonomy of detected labels, and the version of the label
+// model used for detection.
+//
 // Use MaxResults parameter to limit the number of labels returned. If there
 // are more results than specified in MaxResults, the value of NextToken in
 // the operation response contains a pagination token for getting the next set
 // of results. To get the next page of results, call GetlabelDetection and populate
 // the NextToken request parameter with the token value returned from the previous
 // call to GetLabelDetection.
-//
-// GetLabelDetection doesn't return a hierarchical taxonomy, or bounding box
-// information, for detected labels. GetLabelDetection returns null for the
-// Parents and Instances attributes of the object which is returned in the Labels
-// array.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2384,7 +2396,7 @@ func (c *Rekognition) GetLabelDetectionWithContext(ctx aws.Context, input *GetLa
 //    // Example iterating over at most 3 pages of a GetLabelDetection operation.
 //    pageNum := 0
 //    err := client.GetLabelDetectionPages(params,
-//        func(page *GetLabelDetectionOutput, lastPage bool) bool {
+//        func(page *rekognition.GetLabelDetectionOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -2416,10 +2428,12 @@ func (c *Rekognition) GetLabelDetectionPagesWithContext(ctx aws.Context, input *
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*GetLabelDetectionOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*GetLabelDetectionOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -2472,7 +2486,7 @@ func (c *Rekognition) GetPersonTrackingRequest(input *GetPersonTrackingInput) (r
 // GetPersonTracking API operation for Amazon Rekognition.
 //
 // Gets the path tracking results of a Amazon Rekognition Video analysis started
-// by .
+// by StartPersonTracking.
 //
 // The person path tracking operation is started by a call to StartPersonTracking
 // which returns a job identifier (JobId). When the operation finishes, Amazon
@@ -2481,7 +2495,8 @@ func (c *Rekognition) GetPersonTrackingRequest(input *GetPersonTrackingInput) (r
 //
 // To get the results of the person path tracking operation, first check that
 // the status value published to the Amazon SNS topic is SUCCEEDED. If so, call
-// and pass the job identifier (JobId) from the initial call to StartPersonTracking.
+// GetPersonTracking and pass the job identifier (JobId) from the initial call
+// to StartPersonTracking.
 //
 // GetPersonTracking returns an array, Persons, of tracked persons and the time(s)
 // their paths were tracked in the video.
@@ -2568,7 +2583,7 @@ func (c *Rekognition) GetPersonTrackingWithContext(ctx aws.Context, input *GetPe
 //    // Example iterating over at most 3 pages of a GetPersonTracking operation.
 //    pageNum := 0
 //    err := client.GetPersonTrackingPages(params,
-//        func(page *GetPersonTrackingOutput, lastPage bool) bool {
+//        func(page *rekognition.GetPersonTrackingOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -2600,10 +2615,12 @@ func (c *Rekognition) GetPersonTrackingPagesWithContext(ctx aws.Context, input *
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*GetPersonTrackingOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*GetPersonTrackingOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -2655,12 +2672,13 @@ func (c *Rekognition) IndexFacesRequest(input *IndexFacesInput) (req *request.Re
 // the underlying detection algorithm first detects the faces in the input image.
 // For each face, the algorithm extracts facial features into a feature vector,
 // and stores it in the backend database. Amazon Rekognition uses feature vectors
-// when it performs face match and search operations using the and operations.
+// when it performs face match and search operations using the SearchFaces and
+// SearchFacesByImage operations.
 //
 // For more information, see Adding Faces to a Collection in the Amazon Rekognition
 // Developer Guide.
 //
-// To get the number of faces in a collection, call .
+// To get the number of faces in a collection, call DescribeCollection.
 //
 // If you're using version 1.0 of the face detection model, IndexFaces indexes
 // the 15 largest faces in the input image. Later versions of the face detection
@@ -2669,18 +2687,19 @@ func (c *Rekognition) IndexFacesRequest(input *IndexFacesInput) (req *request.Re
 // If you're using version 4 or later of the face model, image orientation information
 // is not returned in the OrientationCorrection field.
 //
-// To determine which version of the model you're using, call and supply the
-// collection ID. You can also get the model version from the value of FaceModelVersion
-// in the response from IndexFaces
+// To determine which version of the model you're using, call DescribeCollection
+// and supply the collection ID. You can also get the model version from the
+// value of FaceModelVersion in the response from IndexFaces
 //
 // For more information, see Model Versioning in the Amazon Rekognition Developer
 // Guide.
 //
 // If you provide the optional ExternalImageID for the input image you provided,
 // Amazon Rekognition associates this ID with all faces that it detects. When
-// you call the operation, the response returns the external ID. You can use
-// this external image ID to create a client-side index to associate the faces
-// with each image. You can then use the index to find all faces in an image.
+// you call the ListFaces operation, the response returns the external ID. You
+// can use this external image ID to create a client-side index to associate
+// the faces with each image. You can then use the index to find all faces in
+// an image.
 //
 // You can specify the maximum number of faces to index with the MaxFaces input
 // parameter. This is useful when you want to index the largest faces in an
@@ -2688,19 +2707,19 @@ func (c *Rekognition) IndexFacesRequest(input *IndexFacesInput) (req *request.Re
 // standing in the background.
 //
 // The QualityFilter input parameter allows you to filter out detected faces
-// that don’t meet the required quality bar chosen by Amazon Rekognition. The
-// quality bar is based on a variety of common use cases. By default, IndexFaces
+// that don’t meet the required quality bar chosen by Amazon Rekognition.
+// The quality bar is based on a variety of common use cases. By default, IndexFaces
 // filters detected faces. You can also explicitly filter detected faces by
 // specifying AUTO for the value of QualityFilter. If you do not want to filter
 // detected faces, specify NONE.
 //
 // To use quality filtering, you need a collection associated with version 3
 // of the face model. To get the version of the face model associated with a
-// collection, call .
+// collection, call DescribeCollection.
 //
 // Information about faces detected in an image, but not indexed, is returned
-// in an array of objects, UnindexedFaces. Faces aren't indexed for reasons
-// such as:
+// in an array of UnindexedFace objects, UnindexedFaces. Faces aren't indexed
+// for reasons such as:
 //
 //    * The number of faces detected exceeds the value of the MaxFaces request
 //    parameter.
@@ -2721,7 +2740,7 @@ func (c *Rekognition) IndexFacesRequest(input *IndexFacesInput) (req *request.Re
 //    * A confidence value, Confidence, which indicates the confidence that
 //    the bounding box contains a face.
 //
-//    * A face ID, faceId, assigned by the service for each face that's detected
+//    * A face ID, FaceId, assigned by the service for each face that's detected
 //    and stored.
 //
 //    * An image ID, ImageId, assigned by the service for the input image.
@@ -2739,6 +2758,7 @@ func (c *Rekognition) IndexFacesRequest(input *IndexFacesInput) (req *request.Re
 // be formatted as a PNG or JPEG file.
 //
 // This operation requires permissions to perform the rekognition:IndexFaces
+// action.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2922,7 +2942,7 @@ func (c *Rekognition) ListCollectionsWithContext(ctx aws.Context, input *ListCol
 //    // Example iterating over at most 3 pages of a ListCollections operation.
 //    pageNum := 0
 //    err := client.ListCollectionsPages(params,
-//        func(page *ListCollectionsOutput, lastPage bool) bool {
+//        func(page *rekognition.ListCollectionsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -2954,10 +2974,12 @@ func (c *Rekognition) ListCollectionsPagesWithContext(ctx aws.Context, input *Li
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListCollectionsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListCollectionsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -3081,7 +3103,7 @@ func (c *Rekognition) ListFacesWithContext(ctx aws.Context, input *ListFacesInpu
 //    // Example iterating over at most 3 pages of a ListFaces operation.
 //    pageNum := 0
 //    err := client.ListFacesPages(params,
-//        func(page *ListFacesOutput, lastPage bool) bool {
+//        func(page *rekognition.ListFacesOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -3113,10 +3135,12 @@ func (c *Rekognition) ListFacesPagesWithContext(ctx aws.Context, input *ListFace
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListFacesOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListFacesOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -3168,7 +3192,7 @@ func (c *Rekognition) ListStreamProcessorsRequest(input *ListStreamProcessorsInp
 
 // ListStreamProcessors API operation for Amazon Rekognition.
 //
-// Gets a list of stream processors that you have created with .
+// Gets a list of stream processors that you have created with CreateStreamProcessor.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3231,7 +3255,7 @@ func (c *Rekognition) ListStreamProcessorsWithContext(ctx aws.Context, input *Li
 //    // Example iterating over at most 3 pages of a ListStreamProcessors operation.
 //    pageNum := 0
 //    err := client.ListStreamProcessorsPages(params,
-//        func(page *ListStreamProcessorsOutput, lastPage bool) bool {
+//        func(page *rekognition.ListStreamProcessorsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -3263,10 +3287,12 @@ func (c *Rekognition) ListStreamProcessorsPagesWithContext(ctx aws.Context, inpu
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListStreamProcessorsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListStreamProcessorsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -3330,7 +3356,7 @@ func (c *Rekognition) RecognizeCelebritiesRequest(input *RecognizeCelebritiesInp
 // use the Celebrity ID property as a unique identifier for the celebrity. If
 // you don't store the celebrity name or additional information URLs returned
 // by RecognizeCelebrities, you will need the ID to identify the celebrity in
-// a call to the operation.
+// a call to the GetCelebrityInfo operation.
 //
 // You pass the input image either as base64-encoded image bytes or as a reference
 // to an image in an Amazon S3 bucket. If you use the AWS CLI to call Amazon
@@ -3561,10 +3587,11 @@ func (c *Rekognition) SearchFacesByImageRequest(input *SearchFacesByImageInput) 
 // then searches the specified collection for matching faces. The operation
 // compares the features of the input face with faces in the specified collection.
 //
-// To search for all faces in an input image, you might first call the operation,
-// and then use the face IDs returned in subsequent calls to the operation.
+// To search for all faces in an input image, you might first call the IndexFaces
+// operation, and then use the face IDs returned in subsequent calls to the
+// SearchFaces operation.
 //
-//  You can also call the DetectFaces operation and use the bounding boxes in
+// You can also call the DetectFaces operation and use the bounding boxes in
 // the response to make face crops, which then you can pass in to the SearchFacesByImage
 // operation.
 //
@@ -3699,7 +3726,8 @@ func (c *Rekognition) StartCelebrityRecognitionRequest(input *StartCelebrityReco
 // to the Amazon Simple Notification Service topic that you specify in NotificationChannel.
 // To get the results of the celebrity recognition analysis, first check that
 // the status value published to the Amazon SNS topic is SUCCEEDED. If so, call
-// and pass the job identifier (JobId) from the initial call to StartCelebrityRecognition.
+// GetCelebrityRecognition and pass the job identifier (JobId) from the initial
+// call to StartCelebrityRecognition.
 //
 // For more information, see Recognizing Celebrities in the Amazon Rekognition
 // Developer Guide.
@@ -3812,18 +3840,17 @@ func (c *Rekognition) StartContentModerationRequest(input *StartContentModeratio
 
 // StartContentModeration API operation for Amazon Rekognition.
 //
-// Starts asynchronous detection of explicit or suggestive adult content in
-// a stored video.
+// Starts asynchronous detection of unsafe content in a stored video.
 //
 // Amazon Rekognition Video can moderate content in a video stored in an Amazon
 // S3 bucket. Use Video to specify the bucket name and the filename of the video.
 // StartContentModeration returns a job identifier (JobId) which you use to
-// get the results of the analysis. When content moderation analysis is finished,
+// get the results of the analysis. When unsafe content analysis is finished,
 // Amazon Rekognition Video publishes a completion status to the Amazon Simple
 // Notification Service topic that you specify in NotificationChannel.
 //
-// To get the results of the content moderation analysis, first check that the
-// status value published to the Amazon SNS topic is SUCCEEDED. If so, call
+// To get the results of the unsafe content analysis, first check that the status
+// value published to the Amazon SNS topic is SUCCEEDED. If so, call GetContentModeration
 // and pass the job identifier (JobId) from the initial call to StartContentModeration.
 //
 // For more information, see Detecting Unsafe Content in the Amazon Rekognition
@@ -3946,8 +3973,8 @@ func (c *Rekognition) StartFaceDetectionRequest(input *StartFaceDetectionInput) 
 // Video publishes a completion status to the Amazon Simple Notification Service
 // topic that you specify in NotificationChannel. To get the results of the
 // face detection operation, first check that the status value published to
-// the Amazon SNS topic is SUCCEEDED. If so, call and pass the job identifier
-// (JobId) from the initial call to StartFaceDetection.
+// the Amazon SNS topic is SUCCEEDED. If so, call GetFaceDetection and pass
+// the job identifier (JobId) from the initial call to StartFaceDetection.
 //
 // For more information, see Detecting Faces in a Stored Video in the Amazon
 // Rekognition Developer Guide.
@@ -4070,8 +4097,8 @@ func (c *Rekognition) StartFaceSearchRequest(input *StartFaceSearchInput) (req *
 // a completion status to the Amazon Simple Notification Service topic that
 // you specify in NotificationChannel. To get the search results, first check
 // that the status value published to the Amazon SNS topic is SUCCEEDED. If
-// so, call and pass the job identifier (JobId) from the initial call to StartFaceSearch.
-// For more information, see procedure-person-search-videos.
+// so, call GetFaceSearch and pass the job identifier (JobId) from the initial
+// call to StartFaceSearch. For more information, see procedure-person-search-videos.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4201,7 +4228,8 @@ func (c *Rekognition) StartLabelDetectionRequest(input *StartLabelDetectionInput
 //
 // To get the results of the label detection operation, first check that the
 // status value published to the Amazon SNS topic is SUCCEEDED. If so, call
-// and pass the job identifier (JobId) from the initial call to StartLabelDetection.
+// GetLabelDetection and pass the job identifier (JobId) from the initial call
+// to StartLabelDetection.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4322,7 +4350,8 @@ func (c *Rekognition) StartPersonTrackingRequest(input *StartPersonTrackingInput
 //
 // To get the results of the person detection operation, first check that the
 // status value published to the Amazon SNS topic is SUCCEEDED. If so, call
-// and pass the job identifier (JobId) from the initial call to StartPersonTracking.
+// GetPersonTracking and pass the job identifier (JobId) from the initial call
+// to StartPersonTracking.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4434,8 +4463,8 @@ func (c *Rekognition) StartStreamProcessorRequest(input *StartStreamProcessorInp
 // StartStreamProcessor API operation for Amazon Rekognition.
 //
 // Starts processing a stream processor. You create a stream processor by calling
-// . To tell StartStreamProcessor which stream processor to start, use the value
-// of the Name field specified in the call to CreateStreamProcessor.
+// CreateStreamProcessor. To tell StartStreamProcessor which stream processor
+// to start, use the value of the Name field specified in the call to CreateStreamProcessor.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4532,7 +4561,7 @@ func (c *Rekognition) StopStreamProcessorRequest(input *StopStreamProcessorInput
 
 // StopStreamProcessor API operation for Amazon Rekognition.
 //
-// Stops a running stream processor that was created by .
+// Stops a running stream processor that was created by CreateStreamProcessor.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4728,7 +4757,8 @@ func (s *BoundingBox) SetWidth(v float64) *BoundingBox {
 	return s
 }
 
-// Provides information about a celebrity recognized by the operation.
+// Provides information about a celebrity recognized by the RecognizeCelebrities
+// operation.
 type Celebrity struct {
 	_ struct{} `type:"structure"`
 
@@ -4908,12 +4938,20 @@ type CompareFacesInput struct {
 	// CLI to call Amazon Rekognition operations, passing base64-encoded image bytes
 	// is not supported.
 	//
+	// If you are using an AWS SDK to call Amazon Rekognition, you might not need
+	// to base64-encode image bytes passed using the Bytes field. For more information,
+	// see Images in the Amazon Rekognition developer guide.
+	//
 	// SourceImage is a required field
 	SourceImage *Image `type:"structure" required:"true"`
 
 	// The target image as base64-encoded bytes or an S3 object. If you use the
 	// AWS CLI to call Amazon Rekognition operations, passing base64-encoded image
 	// bytes is not supported.
+	//
+	// If you are using an AWS SDK to call Amazon Rekognition, you might not need
+	// to base64-encode image bytes passed using the Bytes field. For more information,
+	// see Images in the Amazon Rekognition developer guide.
 	//
 	// TargetImage is a required field
 	TargetImage *Image `type:"structure" required:"true"`
@@ -5031,10 +5069,10 @@ type CompareFacesOutput struct {
 	// after the orientation information in the Exif metadata is used to correct
 	// the image orientation. Images in .png format don't contain Exif metadata.
 	//
-	// Amazon Rekognition doesn’t perform image correction for images in .png format
-	// and .jpeg images without orientation information in the image Exif metadata.
-	// The bounding box coordinates aren't translated and represent the object locations
-	// before the image is rotated.
+	// Amazon Rekognition doesn’t perform image correction for images in .png
+	// format and .jpeg images without orientation information in the image Exif
+	// metadata. The bounding box coordinates aren't translated and represent the
+	// object locations before the image is rotated.
 	SourceImageOrientationCorrection *string `type:"string" enum:"OrientationCorrection"`
 
 	// The value of TargetImageOrientationCorrection is always null.
@@ -5046,10 +5084,10 @@ type CompareFacesOutput struct {
 	// after the orientation information in the Exif metadata is used to correct
 	// the image orientation. Images in .png format don't contain Exif metadata.
 	//
-	// Amazon Rekognition doesn’t perform image correction for images in .png format
-	// and .jpeg images without orientation information in the image Exif metadata.
-	// The bounding box coordinates aren't translated and represent the object locations
-	// before the image is rotated.
+	// Amazon Rekognition doesn’t perform image correction for images in .png
+	// format and .jpeg images without orientation information in the image Exif
+	// metadata. The bounding box coordinates aren't translated and represent the
+	// object locations before the image is rotated.
 	TargetImageOrientationCorrection *string `type:"string" enum:"OrientationCorrection"`
 
 	// An array of faces in the target image that did not match the source image
@@ -5194,14 +5232,14 @@ func (s *ComparedSourceImageFace) SetConfidence(v float64) *ComparedSourceImageF
 	return s
 }
 
-// Information about a moderation label detection in a stored video.
+// Information about an unsafe content label detection in a stored video.
 type ContentModerationDetection struct {
 	_ struct{} `type:"structure"`
 
-	// The moderation label detected by in the stored video.
+	// The unsafe content label detected by in the stored video.
 	ModerationLabel *ModerationLabel `type:"structure"`
 
-	// Time, in milliseconds from the beginning of the video, that the moderation
+	// Time, in milliseconds from the beginning of the video, that the unsafe content
 	// label was detected.
 	Timestamp *int64 `type:"long"`
 }
@@ -5323,7 +5361,7 @@ type CreateStreamProcessorInput struct {
 
 	// An identifier you assign to the stream processor. You can use Name to manage
 	// the stream processor. For example, you can get the current status of the
-	// stream processor by calling . Name is idempotent.
+	// stream processor by calling DescribeStreamProcessor. Name is idempotent.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -5695,7 +5733,7 @@ type DescribeCollectionOutput struct {
 	CreationTimestamp *time.Time `type:"timestamp"`
 
 	// The number of faces that are indexed into the collection. To index faces
-	// into a collection, use .
+	// into a collection, use IndexFaces.
 	FaceCount *int64 `type:"long"`
 
 	// The version of the face model that's used by the collection for face detection.
@@ -5906,6 +5944,10 @@ type DetectFacesInput struct {
 	// CLI to call Amazon Rekognition operations, passing base64-encoded image bytes
 	// is not supported.
 	//
+	// If you are using an AWS SDK to call Amazon Rekognition, you might not need
+	// to base64-encode image bytes passed using the Bytes field. For more information,
+	// see Images in the Amazon Rekognition developer guide.
+	//
 	// Image is a required field
 	Image *Image `type:"structure" required:"true"`
 }
@@ -5965,10 +6007,10 @@ type DetectFacesOutput struct {
 	// after the orientation information in the Exif metadata is used to correct
 	// the image orientation. Images in .png format don't contain Exif metadata.
 	//
-	// Amazon Rekognition doesn’t perform image correction for images in .png format
-	// and .jpeg images without orientation information in the image Exif metadata.
-	// The bounding box coordinates aren't translated and represent the object locations
-	// before the image is rotated.
+	// Amazon Rekognition doesn’t perform image correction for images in .png
+	// format and .jpeg images without orientation information in the image Exif
+	// metadata. The bounding box coordinates aren't translated and represent the
+	// object locations before the image is rotated.
 	OrientationCorrection *string `type:"string" enum:"OrientationCorrection"`
 }
 
@@ -5998,8 +6040,12 @@ type DetectLabelsInput struct {
 	_ struct{} `type:"structure"`
 
 	// The input image as base64-encoded bytes or an S3 object. If you use the AWS
-	// CLI to call Amazon Rekognition operations, passing base64-encoded image bytes
-	// is not supported.
+	// CLI to call Amazon Rekognition operations, passing image bytes is not supported.
+	// Images stored in an S3 Bucket do not need to be base64-encoded.
+	//
+	// If you are using an AWS SDK to call Amazon Rekognition, you might not need
+	// to base64-encode image bytes passed using the Bytes field. For more information,
+	// see Images in the Amazon Rekognition developer guide.
 	//
 	// Image is a required field
 	Image *Image `type:"structure" required:"true"`
@@ -6012,7 +6058,7 @@ type DetectLabelsInput struct {
 	// doesn't return any labels with confidence lower than this specified value.
 	//
 	// If MinConfidence is not specified, the operation returns labels with a confidence
-	// values greater than or equal to 50 percent.
+	// values greater than or equal to 55 percent.
 	MinConfidence *float64 `type:"float"`
 }
 
@@ -6080,10 +6126,10 @@ type DetectLabelsOutput struct {
 	// after the orientation information in the Exif metadata is used to correct
 	// the image orientation. Images in .png format don't contain Exif metadata.
 	//
-	// Amazon Rekognition doesn’t perform image correction for images in .png format
-	// and .jpeg images without orientation information in the image Exif metadata.
-	// The bounding box coordinates aren't translated and represent the object locations
-	// before the image is rotated.
+	// Amazon Rekognition doesn’t perform image correction for images in .png
+	// format and .jpeg images without orientation information in the image Exif
+	// metadata. The bounding box coordinates aren't translated and represent the
+	// object locations before the image is rotated.
 	OrientationCorrection *string `type:"string" enum:"OrientationCorrection"`
 }
 
@@ -6121,6 +6167,10 @@ type DetectModerationLabelsInput struct {
 	// The input image as base64-encoded bytes or an S3 object. If you use the AWS
 	// CLI to call Amazon Rekognition operations, passing base64-encoded image bytes
 	// is not supported.
+	//
+	// If you are using an AWS SDK to call Amazon Rekognition, you might not need
+	// to base64-encode image bytes passed using the Bytes field. For more information,
+	// see Images in the Amazon Rekognition developer guide.
 	//
 	// Image is a required field
 	Image *Image `type:"structure" required:"true"`
@@ -6177,9 +6227,13 @@ func (s *DetectModerationLabelsInput) SetMinConfidence(v float64) *DetectModerat
 type DetectModerationLabelsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Array of detected Moderation labels and the time, in millseconds from the
+	// Array of detected Moderation labels and the time, in milliseconds from the
 	// start of the video, they were detected.
 	ModerationLabels []*ModerationLabel `type:"list"`
+
+	// Version number of the moderation detection model that was used to detect
+	// unsafe content.
+	ModerationModelVersion *string `type:"string"`
 }
 
 // String returns the string representation
@@ -6198,11 +6252,21 @@ func (s *DetectModerationLabelsOutput) SetModerationLabels(v []*ModerationLabel)
 	return s
 }
 
+// SetModerationModelVersion sets the ModerationModelVersion field's value.
+func (s *DetectModerationLabelsOutput) SetModerationModelVersion(v string) *DetectModerationLabelsOutput {
+	s.ModerationModelVersion = &v
+	return s
+}
+
 type DetectTextInput struct {
 	_ struct{} `type:"structure"`
 
 	// The input image as base64-encoded bytes or an Amazon S3 object. If you use
 	// the AWS CLI to call Amazon Rekognition operations, you can't pass image bytes.
+	//
+	// If you are using an AWS SDK to call Amazon Rekognition, you might not need
+	// to base64-encode image bytes passed using the Bytes field. For more information,
+	// see Images in the Amazon Rekognition developer guide.
 	//
 	// Image is a required field
 	Image *Image `type:"structure" required:"true"`
@@ -6265,8 +6329,11 @@ func (s *DetectTextOutput) SetTextDetections(v []*TextDetection) *DetectTextOutp
 	return s
 }
 
-// The emotions detected on the face, and the confidence level in the determination.
-// For example, HAPPY, SAD, and ANGRY.
+// The emotions that appear to be expressed on the face, and the confidence
+// level in the determination. The API is only making a determination of the
+// physical appearance of a person's face. It is not a determination of the
+// person’s internal emotional state and should not be used in such a way.
+// For example, a person pretending to have a sad face might not be sad emotionally.
 type Emotion struct {
 	_ struct{} `type:"structure"`
 
@@ -6435,11 +6502,12 @@ func (s *Face) SetImageId(v string) *Face {
 // facial attributes. The default attributes are BoundingBox, Confidence, Landmarks,
 // Pose, and Quality.
 //
-// is the only Amazon Rekognition Video stored video operation that can return
-// a FaceDetail object with all attributes. To specify which attributes to return,
-// use the FaceAttributes input parameter for . The following Amazon Rekognition
-// Video operations return only the default attributes. The corresponding Start
-// operations don't have a FaceAttributes input parameter.
+// GetFaceDetection is the only Amazon Rekognition Video stored video operation
+// that can return a FaceDetail object with all attributes. To specify which
+// attributes to return, use the FaceAttributes input parameter for StartFaceDetection.
+// The following Amazon Rekognition Video operations return only the default
+// attributes. The corresponding Start operations don't have a FaceAttributes
+// input parameter.
 //
 //    * GetCelebrityRecognition
 //
@@ -6447,9 +6515,10 @@ func (s *Face) SetImageId(v string) *Face {
 //
 //    * GetFaceSearch
 //
-// The Amazon Rekognition Image and operations can return all facial attributes.
-// To specify which attributes to return, use the Attributes input parameter
-// for DetectFaces. For IndexFaces, use the DetectAttributes input parameter.
+// The Amazon Rekognition Image DetectFaces and IndexFaces operations can return
+// all facial attributes. To specify which attributes to return, use the Attributes
+// input parameter for DetectFaces. For IndexFaces, use the DetectAttributes
+// input parameter.
 type FaceDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -6468,8 +6537,11 @@ type FaceDetail struct {
 	// object such as a tree). Default attribute.
 	Confidence *float64 `type:"float"`
 
-	// The emotions detected on the face, and the confidence level in the determination.
-	// For example, HAPPY, SAD, and ANGRY.
+	// The emotions that appear to be expressed on the face, and the confidence
+	// level in the determination. The API is only making a determination of the
+	// physical appearance of a person's face. It is not a determination of the
+	// person’s internal emotional state and should not be used in such a way.
+	// For example, a person pretending to have a sad face might not be sad emotionally.
 	Emotions []*Emotion `type:"list"`
 
 	// Indicates whether or not the face is wearing eye glasses, and the confidence
@@ -6715,7 +6787,7 @@ func (s *FaceRecord) SetFaceDetail(v *FaceDetail) *FaceRecord {
 }
 
 // Input face recognition parameters for an Amazon Rekognition stream processor.
-// FaceRecognitionSettings is a request parameter for .
+// FaceRecognitionSettings is a request parameter for CreateStreamProcessor.
 type FaceSearchSettings struct {
 	_ struct{} `type:"structure"`
 
@@ -6796,7 +6868,8 @@ func (s *Gender) SetValue(v string) *Gender {
 	return s
 }
 
-// Information about where the text detected by is located on an image.
+// Information about where the text detected by DetectText is located on an
+// image.
 type Geometry struct {
 	_ struct{} `type:"structure"`
 
@@ -6833,8 +6906,8 @@ func (s *Geometry) SetPolygon(v []*Point) *Geometry {
 type GetCelebrityInfoInput struct {
 	_ struct{} `type:"structure"`
 
-	// The ID for the celebrity. You get the celebrity ID from a call to the operation,
-	// which recognizes celebrities in an image.
+	// The ID for the celebrity. You get the celebrity ID from a call to the RecognizeCelebrities
+	// operation, which recognizes celebrities in an image.
 	//
 	// Id is a required field
 	Id *string `type:"string" required:"true"`
@@ -7045,8 +7118,8 @@ func (s *GetCelebrityRecognitionOutput) SetVideoMetadata(v *VideoMetadata) *GetC
 type GetContentModerationInput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier for the content moderation job. Use JobId to identify the
-	// job in a subsequent call to GetContentModeration.
+	// The identifier for the unsafe content job. Use JobId to identify the job
+	// in a subsequent call to GetContentModeration.
 	//
 	// JobId is a required field
 	JobId *string `min:"1" type:"string" required:"true"`
@@ -7058,7 +7131,7 @@ type GetContentModerationInput struct {
 
 	// If the previous response was incomplete (because there is more data to retrieve),
 	// Amazon Rekognition returns a pagination token in the response. You can use
-	// this pagination token to retrieve the next set of content moderation labels.
+	// this pagination token to retrieve the next set of unsafe content labels.
 	NextToken *string `type:"string"`
 
 	// Sort to use for elements in the ModerationLabelDetections array. Use TIMESTAMP
@@ -7124,15 +7197,19 @@ func (s *GetContentModerationInput) SetSortBy(v string) *GetContentModerationInp
 type GetContentModerationOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The current status of the content moderation job.
+	// The current status of the unsafe content analysis job.
 	JobStatus *string `type:"string" enum:"VideoJobStatus"`
 
-	// The detected moderation labels and the time(s) they were detected.
+	// The detected unsafe content labels and the time(s) they were detected.
 	ModerationLabels []*ContentModerationDetection `type:"list"`
 
+	// Version number of the moderation detection model that was used to detect
+	// unsafe content.
+	ModerationModelVersion *string `type:"string"`
+
 	// If the response is truncated, Amazon Rekognition Video returns this token
-	// that you can use in the subsequent request to retrieve the next set of moderation
-	// labels.
+	// that you can use in the subsequent request to retrieve the next set of unsafe
+	// content labels.
 	NextToken *string `type:"string"`
 
 	// If the job fails, StatusMessage provides a descriptive error message.
@@ -7162,6 +7239,12 @@ func (s *GetContentModerationOutput) SetJobStatus(v string) *GetContentModeratio
 // SetModerationLabels sets the ModerationLabels field's value.
 func (s *GetContentModerationOutput) SetModerationLabels(v []*ContentModerationDetection) *GetContentModerationOutput {
 	s.ModerationLabels = v
+	return s
+}
+
+// SetModerationModelVersion sets the ModerationModelVersion field's value.
+func (s *GetContentModerationOutput) SetModerationModelVersion(v string) *GetContentModerationOutput {
+	s.ModerationModelVersion = &v
 	return s
 }
 
@@ -7403,12 +7486,12 @@ type GetFaceSearchOutput struct {
 	// results.
 	NextToken *string `type:"string"`
 
-	// An array of persons, , in the video whose face(s) match the face(s) in an
-	// Amazon Rekognition collection. It also includes time information for when
-	// persons are matched in the video. You specify the input collection in an
-	// initial call to StartFaceSearch. Each Persons element includes a time the
-	// person was matched, face match details (FaceMatches) for matching faces in
-	// the collection, and person information (Person) for the matched person.
+	// An array of persons, PersonMatch, in the video whose face(s) match the face(s)
+	// in an Amazon Rekognition collection. It also includes time information for
+	// when persons are matched in the video. You specify the input collection in
+	// an initial call to StartFaceSearch. Each Persons element includes a time
+	// the person was matched, face match details (FaceMatches) for matching faces
+	// in the collection, and person information (Person) for the matched person.
 	Persons []*PersonMatch `type:"list"`
 
 	// If the job fails, StatusMessage provides a descriptive error message.
@@ -7545,6 +7628,9 @@ type GetLabelDetectionOutput struct {
 	// The current status of the label detection job.
 	JobStatus *string `type:"string" enum:"VideoJobStatus"`
 
+	// Version number of the label detection model that was used to detect labels.
+	LabelModelVersion *string `type:"string"`
+
 	// An array of labels detected in the video. Each element contains the detected
 	// label and the time, in milliseconds from the start of the video, that the
 	// label was detected.
@@ -7576,6 +7662,12 @@ func (s GetLabelDetectionOutput) GoString() string {
 // SetJobStatus sets the JobStatus field's value.
 func (s *GetLabelDetectionOutput) SetJobStatus(v string) *GetLabelDetectionOutput {
 	s.JobStatus = &v
+	return s
+}
+
+// SetLabelModelVersion sets the LabelModelVersion field's value.
+func (s *GetLabelDetectionOutput) SetLabelModelVersion(v string) *GetLabelDetectionOutput {
+	s.LabelModelVersion = &v
 	return s
 }
 
@@ -7886,6 +7978,10 @@ type IndexFacesInput struct {
 	// CLI to call Amazon Rekognition operations, passing base64-encoded image bytes
 	// isn't supported.
 	//
+	// If you are using an AWS SDK to call Amazon Rekognition, you might not need
+	// to base64-encode image bytes passed using the Bytes field. For more information,
+	// see Images in the Amazon Rekognition developer guide.
+	//
 	// Image is a required field
 	Image *Image `type:"structure" required:"true"`
 
@@ -7909,11 +8005,11 @@ type IndexFacesInput struct {
 
 	// A filter that specifies how much filtering is done to identify faces that
 	// are detected with low quality. Filtered faces aren't indexed. If you specify
-	// AUTO, filtering prioritizes the identification of faces that don’t meet the
-	// required quality bar chosen by Amazon Rekognition. The quality bar is based
-	// on a variety of common use cases. Low-quality detections can occur for a
-	// number of reasons. Some examples are an object that's misidentified as a
-	// face, a face that's too blurry, or a face with a pose that's too extreme
+	// AUTO, filtering prioritizes the identification of faces that don’t meet
+	// the required quality bar chosen by Amazon Rekognition. The quality bar is
+	// based on a variety of common use cases. Low-quality detections can occur
+	// for a number of reasons. Some examples are an object that's misidentified
+	// as a face, a face that's too blurry, or a face with a pose that's too extreme
 	// to use. If you specify NONE, no filtering is performed. The default value
 	// is AUTO.
 	//
@@ -8031,7 +8127,7 @@ type IndexFacesOutput struct {
 	//    the object locations before the image is rotated.
 	//
 	// Bounding box information is returned in the FaceRecords array. You can get
-	// the version of the face detection model by calling .
+	// the version of the face detection model by calling DescribeCollection.
 	OrientationCorrection *string `type:"string" enum:"OrientationCorrection"`
 
 	// An array of faces that were detected in the image but weren't indexed. They
@@ -8075,14 +8171,15 @@ func (s *IndexFacesOutput) SetUnindexedFaces(v []*UnindexedFace) *IndexFacesOutp
 	return s
 }
 
-// An instance of a label detected by .
+// An instance of a label returned by Amazon Rekognition Image (DetectLabels)
+// or by Amazon Rekognition Video (GetLabelDetection).
 type Instance struct {
 	_ struct{} `type:"structure"`
 
 	// The position of the label instance on the image.
 	BoundingBox *BoundingBox `type:"structure"`
 
-	// The confidence that Amazon Rekognition Image has in the accuracy of the bounding
+	// The confidence that Amazon Rekognition has in the accuracy of the bounding
 	// box.
 	Confidence *float64 `type:"float"`
 }
@@ -8162,12 +8259,7 @@ func (s *KinesisVideoStream) SetArn(v string) *KinesisVideoStream {
 }
 
 // Structure containing details about the detected label, including the name,
-// and level of confidence.
-//
-// The Amazon Rekognition Image operation operation returns a hierarchical taxonomy
-// (Parents) for detected labels and also bounding box information (Instances)
-// for detected labels. Amazon Rekognition Video doesn't return this information
-// and returns null for the Parents and Instances attributes.
+// detected instances, parent labels, and level of confidence.
 type Label struct {
 	_ struct{} `type:"structure"`
 
@@ -8177,18 +8269,12 @@ type Label struct {
 	// If Label represents an object, Instances contains the bounding boxes for
 	// each instance of the detected object. Bounding boxes are returned for common
 	// object labels such as people, cars, furniture, apparel or pets.
-	//
-	// Amazon Rekognition Video does not support bounding box information for detected
-	// labels. The value of Instances is returned as null by GetLabelDetection.
 	Instances []*Instance `type:"list"`
 
 	// The name (label) of the object or scene.
 	Name *string `type:"string"`
 
 	// The parent labels for a label. The response includes all ancestor labels.
-	//
-	// Amazon Rekognition Video does not support a hierarchical taxonomy of detected
-	// labels. The value of Parents is returned as null by GetLabelDetection.
 	Parents []*Parent `type:"list"`
 }
 
@@ -8570,8 +8656,8 @@ func (s *ListStreamProcessorsOutput) SetStreamProcessors(v []*StreamProcessor) *
 	return s
 }
 
-// Provides information about a single type of moderated content found in an
-// image or video. Each type of moderated content has a label within a hierarchical
+// Provides information about a single type of unsafe content found in an image
+// or video. Each type of moderated content has a label within a hierarchical
 // taxonomy. For more information, see Detecting Unsafe Content in the Amazon
 // Rekognition Developer Guide.
 type ModerationLabel struct {
@@ -8585,7 +8671,7 @@ type ModerationLabel struct {
 	// to 50 percent.
 	Confidence *float64 `type:"float"`
 
-	// The label name for the type of content detected in the image.
+	// The label name for the type of unsafe content detected in the image.
 	Name *string `type:"string"`
 
 	// The name for the parent label. Labels at the top level of the hierarchy have
@@ -8819,8 +8905,8 @@ func (s *PersonDetail) SetIndex(v int64) *PersonDetail {
 // return an array of PersonDetection objects with elements for each time a
 // person's path is tracked in a video.
 //
-// For more information, see API_GetPersonTracking in the Amazon Rekognition
-// Developer Guide.
+// For more information, see GetPersonTracking in the Amazon Rekognition Developer
+// Guide.
 type PersonDetection struct {
 	_ struct{} `type:"structure"`
 
@@ -8856,9 +8942,9 @@ func (s *PersonDetection) SetTimestamp(v int64) *PersonDetection {
 
 // Information about a person whose face matches a face(s) in an Amazon Rekognition
 // collection. Includes information about the faces in the Amazon Rekognition
-// collection (), information about the person (PersonDetail), and the time
-// stamp for when the person was detected in a video. An array of PersonMatch
-// objects is returned by .
+// collection (FaceMatch), information about the person (PersonDetail), and
+// the time stamp for when the person was detected in a video. An array of PersonMatch
+// objects is returned by GetFaceSearch.
 type PersonMatch struct {
 	_ struct{} `type:"structure"`
 
@@ -8907,8 +8993,8 @@ func (s *PersonMatch) SetTimestamp(v int64) *PersonMatch {
 // 700x200 and the operation returns X=0.5 and Y=0.25, then the point is at
 // the (350,50) pixel coordinate on the image.
 //
-// An array of Point objects, Polygon, is returned by . Polygon represents a
-// fine-grained polygon around detected text. For more information, see Geometry
+// An array of Point objects, Polygon, is returned by DetectText. Polygon represents
+// a fine-grained polygon around detected text. For more information, see Geometry
 // in the Amazon Rekognition Developer Guide.
 type Point struct {
 	_ struct{} `type:"structure"`
@@ -8990,6 +9076,10 @@ type RecognizeCelebritiesInput struct {
 	// The input image as base64-encoded bytes or an S3 object. If you use the AWS
 	// CLI to call Amazon Rekognition operations, passing base64-encoded image bytes
 	// is not supported.
+	//
+	// If you are using an AWS SDK to call Amazon Rekognition, you might not need
+	// to base64-encode image bytes passed using the Bytes field. For more information,
+	// see Images in the Amazon Rekognition developer guide.
 	//
 	// Image is a required field
 	Image *Image `type:"structure" required:"true"`
@@ -9159,12 +9249,16 @@ type SearchFacesByImageInput struct {
 
 	// (Optional) Specifies the minimum confidence in the face match to return.
 	// For example, don't return any matches where confidence in matches is less
-	// than 70%.
+	// than 70%. The default value is 80%.
 	FaceMatchThreshold *float64 `type:"float"`
 
 	// The input image as base64-encoded bytes or an S3 object. If you use the AWS
 	// CLI to call Amazon Rekognition operations, passing base64-encoded image bytes
 	// is not supported.
+	//
+	// If you are using an AWS SDK to call Amazon Rekognition, you might not need
+	// to base64-encode image bytes passed using the Bytes field. For more information,
+	// see Images in the Amazon Rekognition developer guide.
 	//
 	// Image is a required field
 	Image *Image `type:"structure" required:"true"`
@@ -9303,7 +9397,7 @@ type SearchFacesInput struct {
 
 	// Optional value specifying the minimum confidence in the face match to return.
 	// For example, don't return any matches where confidence in matches is less
-	// than 70%.
+	// than 70%. The default value is 80%.
 	FaceMatchThreshold *float64 `type:"float"`
 
 	// Maximum number of faces to return. The operation returns the maximum number
@@ -9453,8 +9547,10 @@ type StartCelebrityRecognitionInput struct {
 	// started more than once.
 	ClientRequestToken *string `min:"1" type:"string"`
 
-	// Unique identifier you specify to identify the job in the completion status
-	// published to the Amazon Simple Notification Service topic.
+	// An identifier you specify that's returned in the completion notification
+	// that's published to your Amazon Simple Notification Service topic. For example,
+	// you can use JobTag to group related jobs and identify them in the completion
+	// notification.
 	JobTag *string `min:"1" type:"string"`
 
 	// The Amazon SNS topic ARN that you want Amazon Rekognition Video to publish
@@ -9564,8 +9660,10 @@ type StartContentModerationInput struct {
 	// more than once.
 	ClientRequestToken *string `min:"1" type:"string"`
 
-	// Unique identifier you specify to identify the job in the completion status
-	// published to the Amazon Simple Notification Service topic.
+	// An identifier you specify that's returned in the completion notification
+	// that's published to your Amazon Simple Notification Service topic. For example,
+	// you can use JobTag to group related jobs and identify them in the completion
+	// notification.
 	JobTag *string `min:"1" type:"string"`
 
 	// Specifies the minimum confidence that Amazon Rekognition must have in order
@@ -9578,10 +9676,10 @@ type StartContentModerationInput struct {
 	MinConfidence *float64 `type:"float"`
 
 	// The Amazon SNS topic ARN that you want Amazon Rekognition Video to publish
-	// the completion status of the content moderation analysis to.
+	// the completion status of the unsafe content analysis to.
 	NotificationChannel *NotificationChannel `type:"structure"`
 
-	// The video in which you want to moderate content. The video must be stored
+	// The video in which you want to detect unsafe content. The video must be stored
 	// in an Amazon S3 bucket.
 	//
 	// Video is a required field
@@ -9660,7 +9758,7 @@ func (s *StartContentModerationInput) SetVideo(v *Video) *StartContentModeration
 type StartContentModerationOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The identifier for the content moderation analysis job. Use JobId to identify
+	// The identifier for the unsafe content analysis job. Use JobId to identify
 	// the job in a subsequent call to GetContentModeration.
 	JobId *string `min:"1" type:"string"`
 }
@@ -9698,8 +9796,10 @@ type StartFaceDetectionInput struct {
 	// ALL - All facial attributes are returned.
 	FaceAttributes *string `type:"string" enum:"FaceAttributes"`
 
-	// Unique identifier you specify to identify the job in the completion status
-	// published to the Amazon Simple Notification Service topic.
+	// An identifier you specify that's returned in the completion notification
+	// that's published to your Amazon Simple Notification Service topic. For example,
+	// you can use JobTag to group related jobs and identify them in the completion
+	// notification.
 	JobTag *string `min:"1" type:"string"`
 
 	// The ARN of the Amazon SNS topic to which you want Amazon Rekognition Video
@@ -9821,11 +9921,14 @@ type StartFaceSearchInput struct {
 	CollectionId *string `min:"1" type:"string" required:"true"`
 
 	// The minimum confidence in the person match to return. For example, don't
-	// return any matches where confidence in matches is less than 70%.
+	// return any matches where confidence in matches is less than 70%. The default
+	// value is 80%.
 	FaceMatchThreshold *float64 `type:"float"`
 
-	// Unique identifier you specify to identify the job in the completion status
-	// published to the Amazon Simple Notification Service topic.
+	// An identifier you specify that's returned in the completion notification
+	// that's published to your Amazon Simple Notification Service topic. For example,
+	// you can use JobTag to group related jobs and identify them in the completion
+	// notification.
 	JobTag *string `min:"1" type:"string"`
 
 	// The ARN of the Amazon SNS topic to which you want Amazon Rekognition Video
@@ -9952,8 +10055,10 @@ type StartLabelDetectionInput struct {
 	// more than once.
 	ClientRequestToken *string `min:"1" type:"string"`
 
-	// Unique identifier you specify to identify the job in the completion status
-	// published to the Amazon Simple Notification Service topic.
+	// An identifier you specify that's returned in the completion notification
+	// that's published to your Amazon Simple Notification Service topic. For example,
+	// you can use JobTag to group related jobs and identify them in the completion
+	// notification.
 	JobTag *string `min:"1" type:"string"`
 
 	// Specifies the minimum confidence that Amazon Rekognition Video must have
@@ -10079,8 +10184,10 @@ type StartPersonTrackingInput struct {
 	// more than once.
 	ClientRequestToken *string `min:"1" type:"string"`
 
-	// Unique identifier you specify to identify the job in the completion status
-	// published to the Amazon Simple Notification Service topic.
+	// An identifier you specify that's returned in the completion notification
+	// that's published to your Amazon Simple Notification Service topic. For example,
+	// you can use JobTag to group related jobs and identify them in the completion
+	// notification.
 	JobTag *string `min:"1" type:"string"`
 
 	// The Amazon SNS topic ARN you want Amazon Rekognition Video to publish the
@@ -10239,7 +10346,7 @@ func (s StartStreamProcessorOutput) GoString() string {
 type StopStreamProcessorInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name of a stream processor created by .
+	// The name of a stream processor created by CreateStreamProcessor.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -10292,9 +10399,10 @@ func (s StopStreamProcessorOutput) GoString() string {
 }
 
 // An object that recognizes faces in a streaming video. An Amazon Rekognition
-// stream processor is created by a call to . The request parameters for CreateStreamProcessor
-// describe the Kinesis video stream source for the streaming video, face recognition
-// parameters, and where to stream the analysis resullts.
+// stream processor is created by a call to CreateStreamProcessor. The request
+// parameters for CreateStreamProcessor describe the Kinesis video stream source
+// for the streaming video, face recognition parameters, and where to stream
+// the analysis resullts.
 type StreamProcessor struct {
 	_ struct{} `type:"structure"`
 
@@ -10453,7 +10561,7 @@ func (s *Sunglasses) SetValue(v bool) *Sunglasses {
 	return s
 }
 
-// Information about a word or line of text detected by .
+// Information about a word or line of text detected by DetectText.
 //
 // The DetectedText field contains the text that Amazon Rekognition detected
 // in the image.
@@ -10538,8 +10646,8 @@ func (s *TextDetection) SetType(v string) *TextDetection {
 	return s
 }
 
-// A face that detected, but didn't index. Use the Reasons response attribute
-// to determine why a face wasn't indexed.
+// A face that IndexFaces detected, but didn't index. Use the Reasons response
+// attribute to determine why a face wasn't indexed.
 type UnindexedFace struct {
 	_ struct{} `type:"structure"`
 
@@ -10588,8 +10696,8 @@ func (s *UnindexedFace) SetReasons(v []*string) *UnindexedFace {
 }
 
 // Video file stored in an Amazon S3 bucket. Amazon Rekognition video start
-// operations such as use Video to specify a video for analysis. The supported
-// file formats are .mp4, .mov and .avi.
+// operations such as StartLabelDetection use Video to specify a video for analysis.
+// The supported file formats are .mp4, .mov and .avi.
 type Video struct {
 	_ struct{} `type:"structure"`
 
@@ -10747,6 +10855,9 @@ const (
 
 	// EmotionNameUnknown is a EmotionName enum value
 	EmotionNameUnknown = "UNKNOWN"
+
+	// EmotionNameFear is a EmotionName enum value
+	EmotionNameFear = "FEAR"
 )
 
 const (

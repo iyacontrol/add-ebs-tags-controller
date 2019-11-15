@@ -1,8 +1,8 @@
-hash: 1f142c5fee8df456c73b437b32bba514082ea77119bfb9a8313add6af51de294
-updated: 2019-01-09T12:01:46.464224+08:00
+hash: 094dc2ee7f7b6df2043562ca430feec414cfaacee193ba81e403c9f4b8281a58
+updated: 2019-11-15T16:39:19.228939+08:00
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 62936e15518acb527a1a9cb4a39d96d94d0fd9a2
+  version: 502ed1c4f99faa3ca47b41a74ff5e0f1150f9354
   subpackages:
   - aws
   - aws/awserr
@@ -24,6 +24,7 @@ imports:
   - aws/signer/v4
   - internal/ini
   - internal/sdkio
+  - internal/sdkmath
   - internal/sdkrand
   - internal/sdkuri
   - internal/shareddefaults
@@ -38,6 +39,7 @@ imports:
   - service/ec2
   - service/resourcegroupstaggingapi
   - service/sts
+  - service/sts/stsiface
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:

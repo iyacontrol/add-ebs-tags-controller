@@ -1331,7 +1331,7 @@ func (c *SMS) GetConnectorsWithContext(ctx aws.Context, input *GetConnectorsInpu
 //    // Example iterating over at most 3 pages of a GetConnectors operation.
 //    pageNum := 0
 //    err := client.GetConnectorsPages(params,
-//        func(page *GetConnectorsOutput, lastPage bool) bool {
+//        func(page *sms.GetConnectorsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1363,10 +1363,12 @@ func (c *SMS) GetConnectorsPagesWithContext(ctx aws.Context, input *GetConnector
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*GetConnectorsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*GetConnectorsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1473,7 +1475,7 @@ func (c *SMS) GetReplicationJobsWithContext(ctx aws.Context, input *GetReplicati
 //    // Example iterating over at most 3 pages of a GetReplicationJobs operation.
 //    pageNum := 0
 //    err := client.GetReplicationJobsPages(params,
-//        func(page *GetReplicationJobsOutput, lastPage bool) bool {
+//        func(page *sms.GetReplicationJobsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1505,10 +1507,12 @@ func (c *SMS) GetReplicationJobsPagesWithContext(ctx aws.Context, input *GetRepl
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*GetReplicationJobsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*GetReplicationJobsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1615,7 +1619,7 @@ func (c *SMS) GetReplicationRunsWithContext(ctx aws.Context, input *GetReplicati
 //    // Example iterating over at most 3 pages of a GetReplicationRuns operation.
 //    pageNum := 0
 //    err := client.GetReplicationRunsPages(params,
-//        func(page *GetReplicationRunsOutput, lastPage bool) bool {
+//        func(page *sms.GetReplicationRunsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1647,10 +1651,12 @@ func (c *SMS) GetReplicationRunsPagesWithContext(ctx aws.Context, input *GetRepl
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*GetReplicationRunsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*GetReplicationRunsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1753,7 +1759,7 @@ func (c *SMS) GetServersWithContext(ctx aws.Context, input *GetServersInput, opt
 //    // Example iterating over at most 3 pages of a GetServers operation.
 //    pageNum := 0
 //    err := client.GetServersPages(params,
-//        func(page *GetServersOutput, lastPage bool) bool {
+//        func(page *sms.GetServersOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1785,10 +1791,12 @@ func (c *SMS) GetServersPagesWithContext(ctx aws.Context, input *GetServersInput
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*GetServersOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*GetServersOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -5240,7 +5248,7 @@ type ServerReplicationParameters struct {
 	// KMS key ID for replication jobs that produce encrypted AMIs. Can be any of
 	// the following:
 	//
-	// KMS key ID
+	//    * KMS key ID
 	//
 	//    * KMS key alias
 	//
@@ -5248,7 +5256,8 @@ type ServerReplicationParameters struct {
 	//
 	//    * ARN referring to KMS key alias
 	//
-	//  If encrypted is true
+	// If encrypted is true but a KMS key id is not specified, the customer's default
+	// KMS key for EBS is used.
 	KmsKeyId *string `locationName:"kmsKeyId" type:"string"`
 
 	// License type for creating a replication job for the server.
@@ -5654,7 +5663,7 @@ type UpdateReplicationJobInput struct {
 	// KMS key ID for replication jobs that produce encrypted AMIs. Can be any of
 	// the following:
 	//
-	// KMS key ID
+	//    * KMS key ID
 	//
 	//    * KMS key alias
 	//
@@ -5662,7 +5671,8 @@ type UpdateReplicationJobInput struct {
 	//
 	//    * ARN referring to KMS key alias
 	//
-	//  If encrypted is true
+	// If encrypted is true but a KMS key id is not specified, the customer's default
+	// KMS key for EBS is used.
 	KmsKeyId *string `locationName:"kmsKeyId" type:"string"`
 
 	// The license type to be used for the AMI created by a successful replication
