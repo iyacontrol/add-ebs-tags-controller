@@ -30,7 +30,7 @@ type awsSdkEC2 struct {
 
 func Compute() (EC2, error) {
 	cc := cache.NewConfig(5 * time.Minute)
-	sess := newSession(&aws.Config{MaxRetries: aws.Int(10)}, false, cc)
+	sess := newSession(&aws.Config{MaxRetries: aws.Int(3)}, false, cc)
 
 	metadata := ec2metadata.New(sess)
 	region, err := metadata.Region()
