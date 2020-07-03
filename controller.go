@@ -241,10 +241,15 @@ func (c *Controller) syncHandler(key string) error {
 
 	if tags := getVolumeClaimAnnotationBlockStorageAdditionalTags(claim.Annotations); len(tags) > 0 {
 		// aws://ap-southeast-1b/vol-0c37a53ced37b40c3
-		awsVolumeID, err := aws.GetAWSVolumeID(volume.Spec.AWSElasticBlockStore.VolumeID)
-		if err != nil {
-			glog.Errorf("error get aws volume id: %v", err)
-			return fmt.Errorf("error get aws volume id: %v", err)
+		// awsVolumeID, err := aws.GetAWSVolumeID(volume.Spec.AWSElasticBlockStore.VolumeID)
+		// if err != nil {
+		// 	glog.Errorf("error get aws volume id: %v", err)
+		// 	return fmt.Errorf("error get aws volume id: %v", err)
+		// }
+		awsVolumeID := volume.Spec.CSI.VolumeHandle
+		if awsVolumeID == "" {
+			glog.Errorf("error get aws volume id: %v", volume)
+			return fmt.Errorf("error get aws volume id: %v", volume)
 		}
 
 		if err := c.ec2.CreateTags(awsVolumeID, tags); err != nil {
